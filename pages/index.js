@@ -43,14 +43,26 @@ export default function Home() {
         
         if (typeof eloValue === 'number') {
           // La API devuelve el elo en formato de miles (ej: 2.83 = 2830)
-          parsedElo = Math.round(eloValue * 1000);
+          // Solo multiplicar si el valor es mayor a 0
+          parsedElo = eloValue > 0 ? Math.round(eloValue * 1000) : 0;
+          
+          // Si el resultado tiene 3 dígitos (entre 100-999), agregar un 0 al final
+          if (parsedElo > 0 && parsedElo >= 100 && parsedElo <= 999) {
+            parsedElo = parsedElo * 10;
+          }
         } else if (typeof eloValue === 'string') {
           // Remover cualquier caracter no numérico excepto puntos
           const cleanValue = eloValue.replace(/[^\d.]/g, '');
-          parsedElo = Math.round((parseFloat(cleanValue) || 0) * 1000);
+          const floatValue = parseFloat(cleanValue) || 0;
+          parsedElo = floatValue > 0 ? Math.round(floatValue * 1000) : 0;
+          
+          // Si el resultado tiene 3 dígitos (entre 100-999), agregar un 0 al final
+          if (parsedElo > 0 && parsedElo >= 100 && parsedElo <= 999) {
+            parsedElo = parsedElo * 10;
+          }
         }
         
-        console.log(`${nick.name} parsed elo:`, parsedElo);
+        console.log(`${nick.name} raw: ${eloValue}, parsed: ${parsedElo}`);
         
         return {
           ...nick,
