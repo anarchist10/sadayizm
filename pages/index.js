@@ -26,7 +26,9 @@ export default function Home() {
         fetch(nick.faceitApi)
           .then(res => res.json())
           .then(data => {
-            setElos(prev => ({ ...prev, [nick.name]: data.elo || data }));
+            const eloValue = data.elo || data;
+            console.log(`${nick.name} raw elo:`, eloValue, typeof eloValue);
+            setElos(prev => ({ ...prev, [nick.name]: eloValue }));
           })
           .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
       }
@@ -35,10 +37,25 @@ export default function Home() {
 
   useEffect(() => {
     if (Object.keys(elos).length === nicks.length) {
-      const nicksWithElo = nicks.map(nick => ({
-        ...nick,
-        elo: typeof elos[nick.name] === 'number' ? elos[nick.name] : parseInt(elos[nick.name]) || 0
-      }));
+      const nicksWithElo = nicks.map(nick => {
+        const eloValue = elos[nick.name];
+        let parsedElo = 0;
+        
+        if (typeof eloValue === 'number') {
+          parsedElo = eloValue;
+        } else if (typeof eloValue === 'string') {
+          // Remover cualquier caracter no numérico excepto puntos
+          const cleanValue = eloValue.replace(/[^\d.]/g, '');
+          parsedElo = parseFloat(cleanValue) || 0;
+        }
+        
+        console.log(`${nick.name} parsed elo:`, parsedElo);
+        
+        return {
+          ...nick,
+          elo: parsedElo
+        };
+      });
       nicksWithElo.sort((a, b) => b.elo - a.elo);
       setSortedNicks(nicksWithElo);
     }
