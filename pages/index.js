@@ -67,30 +67,35 @@ export default function Home() {
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
-            <div key={nick.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <a
-                className="nick-link"
-                href={nick.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {nick.name}
-              </a>
-              {nick.faceitApi && (
-                <>
-                  <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
-                  <a
-                    href={nick.faceitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
-                    </svg>
-                  </a>
-                </>
+            <div key={nick.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'column' }}>
+              {idx === 0 && (
+                <img src="/corona.png" alt="corona" style={{ width: '38px', marginBottom: '-0.3rem', display: 'block' }} />
               )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <a
+                  className="nick-link"
+                  href={nick.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {nick.name}
+                </a>
+                {nick.faceitApi && (
+                  <>
+                    <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
+                    <a
+                      href={nick.faceitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
+                      </svg>
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>
