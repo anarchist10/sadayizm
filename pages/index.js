@@ -118,7 +118,8 @@ export default function Home() {
                   style={{ 
                     display: 'block', 
                     textAlign: 'center',
-                    color: nick.name === 'angry' ? '#ff0000' : 'inherit'
+                    color: nick.name === 'angry' ? '#ff0000' : 'inherit',
+                    textDecoration: nick.name === 'angry' ? 'line-through' : 'none'
                   }}
                 >
                   {nick.name}
