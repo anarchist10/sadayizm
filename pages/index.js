@@ -38,41 +38,6 @@ export default function Home() {
           .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
       }
     });
-    // Obtener elo diff de nikito
-    fetch('https://api.jakobkristensen.com/76561198402344265/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setNikitoEloDiff(null));
-    setTimeout(() => setShowNikitoEloDiff(true), 3000);
-    setTimeout(() => setShowNikitoEloDiff(false), 6000);
-    // Obtener elo diff de anar
-    fetch('https://api.jakobkristensen.com/76561198860541170/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setAnarEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setAnarEloDiff(null));
-    setTimeout(() => setShowAnarEloDiff(true), 3000);
-    setTimeout(() => setShowAnarEloDiff(false), 6000);
-    // Obtener elo diff de supr3me
-    fetch('https://api.jakobkristensen.com/76561198063990435/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setSupr3meEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setSupr3meEloDiff(null));
-    setTimeout(() => setShowSupr3meEloDiff(true), 3000);
-    setTimeout(() => setShowSupr3meEloDiff(false), 6000);
-    // Obtener elo diff de angry
-    fetch('https://api.jakobkristensen.com/76561198131602113/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setAngryEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setAngryEloDiff(null));
-    setTimeout(() => setShowAngryEloDiff(true), 3000);
-    setTimeout(() => setShowAngryEloDiff(false), 6000);
-    // Obtener elo diff de nyoh
-    fetch('https://api.jakobkristensen.com/76561198374148982/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setNyohEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setNyohEloDiff(null));
-    setTimeout(() => setShowNyohEloDiff(true), 3000);
-    setTimeout(() => setShowNyohEloDiff(false), 6000);
   }, []);
 
   useEffect(() => {
@@ -98,6 +63,56 @@ export default function Home() {
     return () => {
       window.removeEventListener('click', handleFirstClick);
     };
+  }, []);
+
+  useEffect(() => {
+    fetch('https://api.jakobkristensen.com/76561198402344265/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setNikitoEloDiff(null));
+    const show = setTimeout(() => setShowNikitoEloDiff(true), 3000);
+    const hide = setTimeout(() => setShowNikitoEloDiff(false), 6000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, []);
+
+  useEffect(() => {
+    fetch('https://api.jakobkristensen.com/76561198860541170/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setAnarEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setAnarEloDiff(null));
+    const show = setTimeout(() => setShowAnarEloDiff(true), 3000);
+    const hide = setTimeout(() => setShowAnarEloDiff(false), 6000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, []);
+
+  useEffect(() => {
+    fetch('https://api.jakobkristensen.com/76561198063990435/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setSupr3meEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setSupr3meEloDiff(null));
+    const show = setTimeout(() => setShowSupr3meEloDiff(true), 3000);
+    const hide = setTimeout(() => setShowSupr3meEloDiff(false), 6000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, []);
+
+  useEffect(() => {
+    fetch('https://api.jakobkristensen.com/76561198131602113/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setAngryEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setAngryEloDiff(null));
+    const show = setTimeout(() => setShowAngryEloDiff(true), 3000);
+    const hide = setTimeout(() => setShowAngryEloDiff(false), 6000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, []);
+
+  useEffect(() => {
+    fetch('https://api.jakobkristensen.com/76561198374148982/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setNyohEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setNyohEloDiff(null));
+    const show = setTimeout(() => setShowNyohEloDiff(true), 3000);
+    const hide = setTimeout(() => setShowNyohEloDiff(false), 6000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
   }, []);
 
   return (
