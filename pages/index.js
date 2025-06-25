@@ -69,7 +69,7 @@ export default function Home() {
           {sortedNicks.map((nick, idx) => (
             <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
               {idx === 0 && (
-                <img src="/corona.png" alt="corona" style={{ width: '70px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
+                <img src="/corona.png" alt="corona" style={{ width: '100px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <a
