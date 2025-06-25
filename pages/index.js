@@ -22,6 +22,8 @@ export default function Home() {
   const [showSupr3meEloDiff, setShowSupr3meEloDiff] = useState(false);
   const [angryEloDiff, setAngryEloDiff] = useState(null);
   const [showAngryEloDiff, setShowAngryEloDiff] = useState(false);
+  const [nyohEloDiff, setNyohEloDiff] = useState(null);
+  const [showNyohEloDiff, setShowNyohEloDiff] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -64,6 +66,13 @@ export default function Home() {
       .catch(() => setAngryEloDiff(null));
     setTimeout(() => setShowAngryEloDiff(true), 3000);
     setTimeout(() => setShowAngryEloDiff(false), 6000);
+    // Obtener elo diff de nyoh
+    fetch('https://api.jakobkristensen.com/76561198374148982/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setNyohEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setNyohEloDiff(null));
+    setTimeout(() => setShowNyohEloDiff(true), 3000);
+    setTimeout(() => setShowNyohEloDiff(false), 6000);
   }, []);
 
   useEffect(() => {
@@ -186,6 +195,23 @@ export default function Home() {
                         }}
                       >
                         {angryEloDiff > 0 ? '↑' : angryEloDiff < 0 ? '↓' : ''} {angryEloDiff > 0 ? '+' : ''}{angryEloDiff}
+                      </span>
+                    )}
+                    {/* elo diff para nyoh */}
+                    {nick.name === 'nyoh' && nyohEloDiff !== null && showNyohEloDiff && (
+                      <span
+                        style={{
+                          color: nyohEloDiff > 0 ? 'limegreen' : nyohEloDiff < 0 ? 'red' : 'gray',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '1.1rem',
+                          margin: '0 0.3rem',
+                          minWidth: '55px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {nyohEloDiff > 0 ? '↑' : nyohEloDiff < 0 ? '↓' : ''} {nyohEloDiff > 0 ? '+' : ''}{nyohEloDiff}
                       </span>
                     )}
                     <a
