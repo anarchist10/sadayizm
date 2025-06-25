@@ -14,8 +14,8 @@ const nicks = [
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
-  const [nikitoEloDiff, setNikitoEloDiff] = useState(null);
-  const [showNikitoEloDiff, setShowNikitoEloDiff] = useState(false);
+  const [eloDiffs, setEloDiffs] = useState({});
+  const [showEloDiffs, setShowEloDiffs] = useState({});
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -29,15 +29,31 @@ export default function Home() {
           })
           .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
       }
+      // API de elo diff para cada nick
+      const eloDiffApi = {
+        'anar': 'https://api.jakobkristensen.com/76561198860541170/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]',
+        'nikito': 'https://api.jakobkristensen.com/76561198402344265/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]',
+        'nyoh': 'https://api.jakobkristensen.com/76561198374148982/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]',
+        'rks': 'https://api.jakobkristensen.com/76561198023120655/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]',
+        'angry': 'https://api.jakobkristensen.com/76561198131602113/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]',
+        'Supr3me': 'https://api.jakobkristensen.com/76561198063990435/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]',
+      };
+      if (eloDiffApi[nick.name]) {
+        fetch(eloDiffApi[nick.name])
+          .then(res => res.json())
+          .then(data => {
+            setEloDiffs(prev => ({ ...prev, [nick.name]: typeof data === 'number' ? data : parseInt(data) }));
+          })
+          .catch(() => setEloDiffs(prev => ({ ...prev, [nick.name]: null })));
+      }
     });
-    // Obtener elo diff de nikito
-    fetch('https://api.jakobkristensen.com/76561198402344265/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setNikitoEloDiff(null));
-    // Mostrar elo diff 3 segundos y luego ocultar
-    setTimeout(() => setShowNikitoEloDiff(true), 3000);
-    setTimeout(() => setShowNikitoEloDiff(false), 6000);
+    // Mostrar elo diff 3 segundos después y ocultar luego de 3 segundos para todos
+    setTimeout(() => {
+      setShowEloDiffs(nicks.reduce((acc, nick) => ({ ...acc, [nick.name]: true }), {}));
+    }, 3000);
+    setTimeout(() => {
+      setShowEloDiffs(nicks.reduce((acc, nick) => ({ ...acc, [nick.name]: false }), {}));
+    }, 6000);
   }, []);
 
   useEffect(() => {
@@ -94,17 +110,23 @@ export default function Home() {
                 {nick.faceitApi && (
                   <>
                     <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
-                    {/* elo diff solo para nikito */}
-                    {nick.name === 'nikito' && nikitoEloDiff !== null && showNikitoEloDiff && (
-                      <span style={{
-                        color: nikitoEloDiff > 0 ? 'limegreen' : nikitoEloDiff < 0 ? 'red' : 'gray',
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '1.1rem',
-                        margin: '0 0.3rem'
-                      }}>
-                        {nikitoEloDiff > 0 ? '↑' : nikitoEloDiff < 0 ? '↓' : ''} {nikitoEloDiff > 0 ? '+' : ''}{nikitoEloDiff}
+                    {/* elo diff para todos los nicks */}
+                    {eloDiffs[nick.name] !== undefined && eloDiffs[nick.name] !== null && (
+                      <span
+                        className={`fade-elo-diff${showEloDiffs[nick.name] ? ' visible' : ''}`}
+                        style={{
+                          color: eloDiffs[nick.name] > 0 ? 'limegreen' : eloDiffs[nick.name] < 0 ? 'red' : 'gray',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '1.1rem',
+                          margin: '0 0.3rem',
+                          minWidth: '55px',
+                          justifyContent: 'center',
+                          opacity: showEloDiffs[nick.name] ? 1 : 0
+                        }}
+                      >
+                        {eloDiffs[nick.name] > 0 ? '↑' : eloDiffs[nick.name] < 0 ? '↓' : ''} {eloDiffs[nick.name] > 0 ? '+' : ''}{eloDiffs[nick.name]}
                       </span>
                     )}
                     <a

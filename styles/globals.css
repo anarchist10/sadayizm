@@ -57,3 +57,11 @@ body {
 .nick-link:hover {
   color: #ffd700;
 }
+
+.fade-elo-diff {
+  transition: opacity 0.7s ease;
+  opacity: 0;
+}
+.fade-elo-diff.visible {
+  opacity: 1;
+}
