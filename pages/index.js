@@ -14,14 +14,6 @@ const nicks = [
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
-  const [nikitoEloDiff, setNikitoEloDiff] = useState(null);
-  const [showNikitoEloDiff, setShowNikitoEloDiff] = useState(false);
-  const [anarEloDiff, setAnarEloDiff] = useState(null);
-  const [showAnarEloDiff, setShowAnarEloDiff] = useState(false);
-  const [supr3meEloDiff, setSupr3meEloDiff] = useState(null);
-  const [showSupr3meEloDiff, setShowSupr3meEloDiff] = useState(false);
-  const [angryEloDiff, setAngryEloDiff] = useState(null);
-  const [showAngryEloDiff, setShowAngryEloDiff] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -63,46 +55,6 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    fetch('https://api.jakobkristensen.com/76561198402344265/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setNikitoEloDiff(null));
-    const show = setTimeout(() => setShowNikitoEloDiff(true), 3000);
-    const hide = setTimeout(() => setShowNikitoEloDiff(false), 6000);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, []);
-
-  useEffect(() => {
-    fetch('https://api.jakobkristensen.com/76561198860541170/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setAnarEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setAnarEloDiff(null));
-    const show = setTimeout(() => setShowAnarEloDiff(true), 3000);
-    const hide = setTimeout(() => setShowAnarEloDiff(false), 6000);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, []);
-
-  useEffect(() => {
-    fetch('https://api.jakobkristensen.com/76561198063990435/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setSupr3meEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setSupr3meEloDiff(null));
-    const show = setTimeout(() => setShowSupr3meEloDiff(true), 3000);
-    const hide = setTimeout(() => setShowSupr3meEloDiff(false), 6000);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, []);
-
-  useEffect(() => {
-    fetch('https://api.jakobkristensen.com/76561198131602113/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setAngryEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setAngryEloDiff(null));
-    const show = setTimeout(() => setShowAngryEloDiff(true), 3000);
-    const hide = setTimeout(() => setShowAngryEloDiff(false), 6000);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, []);
-
   return (
     <>
       <Head>
@@ -132,74 +84,6 @@ export default function Home() {
                 {nick.faceitApi && (
                   <>
                     <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
-                    {/* elo diff para nikito */}
-                    {nick.name === 'nikito' && nikitoEloDiff !== null && showNikitoEloDiff && (
-                      <span
-                        style={{
-                          color: nikitoEloDiff > 0 ? 'limegreen' : nikitoEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {nikitoEloDiff > 0 ? '↑' : nikitoEloDiff < 0 ? '↓' : ''} {nikitoEloDiff > 0 ? '+' : ''}{nikitoEloDiff}
-                      </span>
-                    )}
-                    {/* elo diff para anar */}
-                    {nick.name === 'anar' && anarEloDiff !== null && showAnarEloDiff && (
-                      <span
-                        style={{
-                          color: anarEloDiff > 0 ? 'limegreen' : anarEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {anarEloDiff > 0 ? '↑' : anarEloDiff < 0 ? '↓' : ''} {anarEloDiff > 0 ? '+' : ''}{anarEloDiff}
-                      </span>
-                    )}
-                    {/* elo diff para supr3me */}
-                    {nick.name === 'Supr3me' && supr3meEloDiff !== null && showSupr3meEloDiff && (
-                      <span
-                        style={{
-                          color: supr3meEloDiff > 0 ? 'limegreen' : supr3meEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {supr3meEloDiff > 0 ? '↑' : supr3meEloDiff < 0 ? '↓' : ''} {supr3meEloDiff > 0 ? '+' : ''}{supr3meEloDiff}
-                      </span>
-                    )}
-                    {/* elo diff para angry */}
-                    {nick.name === 'angry' && angryEloDiff !== null && showAngryEloDiff && (
-                      <span
-                        style={{
-                          color: angryEloDiff > 0 ? 'limegreen' : angryEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {angryEloDiff > 0 ? '↑' : angryEloDiff < 0 ? '↓' : ''} {angryEloDiff > 0 ? '+' : ''}{angryEloDiff}
-                      </span>
-                    )}
                     <a
                       href={nick.faceitUrl}
                       target="_blank"
