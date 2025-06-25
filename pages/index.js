@@ -67,9 +67,9 @@ export default function Home() {
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
-            <div key={nick.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'column' }}>
+            <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
               {idx === 0 && (
-                <img src="/corona.png" alt="corona" style={{ width: '38px', marginBottom: '-0.3rem', display: 'block' }} />
+                <img src="/corona.png" alt="corona" style={{ width: '70px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <a
@@ -77,6 +77,7 @@ export default function Home() {
                   href={nick.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  style={{ display: 'block', textAlign: 'center' }}
                 >
                   {nick.name}
                 </a>
