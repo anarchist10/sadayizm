@@ -33,6 +33,14 @@ body {
   gap: 1rem;
 }
 
+.nick-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 300px;
+  padding: 0.5rem 0;
+}
+
 .nick-link {
   color: #fff;
   font-size: 1.5rem;
@@ -43,4 +51,16 @@ body {
 
 .nick-link:hover {
   color: #ffd700;
+}
+
+.elo-text {
+  color: #fff;
+  font-family: monospace;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.elo-arrow {
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
