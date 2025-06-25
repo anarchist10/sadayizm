@@ -15,6 +15,7 @@ export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [nikitoEloDiff, setNikitoEloDiff] = useState(null);
+  const [showNikitoEloDiff, setShowNikitoEloDiff] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -34,6 +35,9 @@ export default function Home() {
       .then(res => res.json())
       .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
       .catch(() => setNikitoEloDiff(null));
+    // Mostrar elo diff 3 segundos y luego ocultar
+    setTimeout(() => setShowNikitoEloDiff(true), 3000);
+    setTimeout(() => setShowNikitoEloDiff(false), 6000);
   }, []);
 
   useEffect(() => {
@@ -91,7 +95,7 @@ export default function Home() {
                   <>
                     <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
                     {/* elo diff solo para nikito */}
-                    {nick.name === 'nikito' && nikitoEloDiff !== null && (
+                    {nick.name === 'nikito' && nikitoEloDiff !== null && showNikitoEloDiff && (
                       <span style={{
                         color: nikitoEloDiff > 0 ? 'limegreen' : nikitoEloDiff < 0 ? 'red' : 'gray',
                         fontWeight: 'bold',
