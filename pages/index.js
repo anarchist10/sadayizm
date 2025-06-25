@@ -119,7 +119,7 @@ export default function Home() {
                   style={{ 
                     display: 'block', 
                     textAlign: 'center',
-                    color: nick.name === 'angry' ? '#ff0000' : 'inherit',
+                    color: idx === 0 ? '#FFD700' : (nick.name === 'angry' ? '#ff0000' : 'inherit'),
                     position: nick.name === 'angry' ? 'relative' : 'static'
                   }}
                 >
