@@ -42,11 +42,12 @@ export default function Home() {
         let parsedElo = 0;
         
         if (typeof eloValue === 'number') {
-          parsedElo = eloValue;
+          // La API devuelve el elo en formato de miles (ej: 2.83 = 2830)
+          parsedElo = Math.round(eloValue * 1000);
         } else if (typeof eloValue === 'string') {
           // Remover cualquier caracter no numérico excepto puntos
           const cleanValue = eloValue.replace(/[^\d.]/g, '');
-          parsedElo = parseFloat(cleanValue) || 0;
+          parsedElo = Math.round((parseFloat(cleanValue) || 0) * 1000);
         }
         
         console.log(`${nick.name} parsed elo:`, parsedElo);
