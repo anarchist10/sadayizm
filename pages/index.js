@@ -20,12 +20,6 @@ export default function Home() {
   const [showAnarEloDiff, setShowAnarEloDiff] = useState(false);
   const [supr3meEloDiff, setSupr3meEloDiff] = useState(null);
   const [showSupr3meEloDiff, setShowSupr3meEloDiff] = useState(false);
-  const [angryEloDiff, setAngryEloDiff] = useState(null);
-  const [showAngryEloDiff, setShowAngryEloDiff] = useState(false);
-  const [rksEloDiff, setRksEloDiff] = useState(null);
-  const [showRksEloDiff, setShowRksEloDiff] = useState(false);
-  const [nyohEloDiff, setNyohEloDiff] = useState(null);
-  const [showNyohEloDiff, setShowNyohEloDiff] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -61,27 +55,6 @@ export default function Home() {
       .catch(() => setSupr3meEloDiff(null));
     setTimeout(() => setShowSupr3meEloDiff(true), 3000);
     setTimeout(() => setShowSupr3meEloDiff(false), 6000);
-    // Obtener elo diff de angry
-    fetch('https://api.jakobkristensen.com/76561198131602113/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setAngryEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setAngryEloDiff(null));
-    setTimeout(() => setShowAngryEloDiff(true), 3000);
-    setTimeout(() => setShowAngryEloDiff(false), 6000);
-    // Obtener elo diff de rks
-    fetch('https://api.jakobkristensen.com/76561198023120655/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setRksEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setRksEloDiff(null));
-    setTimeout(() => setShowRksEloDiff(true), 3000);
-    setTimeout(() => setShowRksEloDiff(false), 6000);
-    // Obtener elo diff de nyoh
-    fetch('https://api.jakobkristensen.com/76561198374148982/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => setNyohEloDiff(typeof data === 'number' ? data : parseInt(data)))
-      .catch(() => setNyohEloDiff(null));
-    setTimeout(() => setShowNyohEloDiff(true), 3000);
-    setTimeout(() => setShowNyohEloDiff(false), 6000);
   }, []);
 
   useEffect(() => {
@@ -187,57 +160,6 @@ export default function Home() {
                         }}
                       >
                         {supr3meEloDiff > 0 ? '↑' : supr3meEloDiff < 0 ? '↓' : ''} {supr3meEloDiff > 0 ? '+' : ''}{supr3meEloDiff}
-                      </span>
-                    )}
-                    {/* elo diff para angry */}
-                    {nick.name === 'angry' && angryEloDiff !== null && showAngryEloDiff && (
-                      <span
-                        style={{
-                          color: angryEloDiff > 0 ? 'limegreen' : angryEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {angryEloDiff > 0 ? '↑' : angryEloDiff < 0 ? '↓' : ''} {angryEloDiff > 0 ? '+' : ''}{angryEloDiff}
-                      </span>
-                    )}
-                    {/* elo diff para rks */}
-                    {nick.name === 'rks' && rksEloDiff !== null && showRksEloDiff && (
-                      <span
-                        style={{
-                          color: rksEloDiff > 0 ? 'limegreen' : rksEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {rksEloDiff > 0 ? '↑' : rksEloDiff < 0 ? '↓' : ''} {rksEloDiff > 0 ? '+' : ''}{rksEloDiff}
-                      </span>
-                    )}
-                    {/* elo diff para nyoh */}
-                    {nick.name === 'nyoh' && nyohEloDiff !== null && showNyohEloDiff && (
-                      <span
-                        style={{
-                          color: nyohEloDiff > 0 ? 'limegreen' : nyohEloDiff < 0 ? 'red' : 'gray',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1.1rem',
-                          margin: '0 0.3rem',
-                          minWidth: '55px',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {nyohEloDiff > 0 ? '↑' : nyohEloDiff < 0 ? '↓' : ''} {nyohEloDiff > 0 ? '+' : ''}{nyohEloDiff}
                       </span>
                     )}
                     <a
