@@ -20,6 +20,8 @@ export default function Home() {
   const [showAnarEloDiff, setShowAnarEloDiff] = useState(false);
   const [supr3meEloDiff, setSupr3meEloDiff] = useState(null);
   const [showSupr3meEloDiff, setShowSupr3meEloDiff] = useState(false);
+  const [angryEloDiff, setAngryEloDiff] = useState(null);
+  const [showAngryEloDiff, setShowAngryEloDiff] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -55,6 +57,13 @@ export default function Home() {
       .catch(() => setSupr3meEloDiff(null));
     setTimeout(() => setShowSupr3meEloDiff(true), 3000);
     setTimeout(() => setShowSupr3meEloDiff(false), 6000);
+    // Obtener elo diff de angry
+    fetch('https://api.jakobkristensen.com/76561198131602113/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setAngryEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setAngryEloDiff(null));
+    setTimeout(() => setShowAngryEloDiff(true), 3000);
+    setTimeout(() => setShowAngryEloDiff(false), 6000);
   }, []);
 
   useEffect(() => {
@@ -160,6 +169,23 @@ export default function Home() {
                         }}
                       >
                         {supr3meEloDiff > 0 ? '↑' : supr3meEloDiff < 0 ? '↓' : ''} {supr3meEloDiff > 0 ? '+' : ''}{supr3meEloDiff}
+                      </span>
+                    )}
+                    {/* elo diff para angry */}
+                    {nick.name === 'angry' && angryEloDiff !== null && showAngryEloDiff && (
+                      <span
+                        style={{
+                          color: angryEloDiff > 0 ? 'limegreen' : angryEloDiff < 0 ? 'red' : 'gray',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '1.1rem',
+                          margin: '0 0.3rem',
+                          minWidth: '55px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {angryEloDiff > 0 ? '↑' : angryEloDiff < 0 ? '↓' : ''} {angryEloDiff > 0 ? '+' : ''}{angryEloDiff}
                       </span>
                     )}
                     <a
