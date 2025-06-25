@@ -16,6 +16,8 @@ export default function Home() {
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [nikitoEloDiff, setNikitoEloDiff] = useState(null);
   const [showNikitoEloDiff, setShowNikitoEloDiff] = useState(false);
+  const [anarEloDiff, setAnarEloDiff] = useState(null);
+  const [showAnarEloDiff, setShowAnarEloDiff] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -35,9 +37,15 @@ export default function Home() {
       .then(res => res.json())
       .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
       .catch(() => setNikitoEloDiff(null));
-    // Mostrar elo diff 3 segundos y luego ocultar
     setTimeout(() => setShowNikitoEloDiff(true), 3000);
     setTimeout(() => setShowNikitoEloDiff(false), 6000);
+    // Obtener elo diff de anar
+    fetch('https://api.jakobkristensen.com/76561198860541170/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setAnarEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setAnarEloDiff(null));
+    setTimeout(() => setShowAnarEloDiff(true), 3000);
+    setTimeout(() => setShowAnarEloDiff(false), 6000);
   }, []);
 
   useEffect(() => {
@@ -94,7 +102,7 @@ export default function Home() {
                 {nick.faceitApi && (
                   <>
                     <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
-                    {/* elo diff solo para nikito */}
+                    {/* elo diff para nikito */}
                     {nick.name === 'nikito' && nikitoEloDiff !== null && showNikitoEloDiff && (
                       <span
                         style={{
@@ -109,6 +117,23 @@ export default function Home() {
                         }}
                       >
                         {nikitoEloDiff > 0 ? '↑' : nikitoEloDiff < 0 ? '↓' : ''} {nikitoEloDiff > 0 ? '+' : ''}{nikitoEloDiff}
+                      </span>
+                    )}
+                    {/* elo diff para anar */}
+                    {nick.name === 'anar' && anarEloDiff !== null && showAnarEloDiff && (
+                      <span
+                        style={{
+                          color: anarEloDiff > 0 ? 'limegreen' : anarEloDiff < 0 ? 'red' : 'gray',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '1.1rem',
+                          margin: '0 0.3rem',
+                          minWidth: '55px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {anarEloDiff > 0 ? '↑' : anarEloDiff < 0 ? '↓' : ''} {anarEloDiff > 0 ? '+' : ''}{anarEloDiff}
                       </span>
                     )}
                     <a
