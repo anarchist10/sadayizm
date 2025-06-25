@@ -31,6 +31,7 @@ export default function Home() {
   useEffect(() => {
     const handleFirstClick = () => {
       if (!startedRef.current && audioRef.current) {
+        audioRef.current.volume = 0.5;
         audioRef.current.play();
         startedRef.current = true;
       }
