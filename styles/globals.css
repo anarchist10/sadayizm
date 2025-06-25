@@ -26,6 +26,94 @@ body {
   letter-spacing: 0.1em;
 }
 
+/* Estilos para la sección de Faceit ELO */
+.faceit-section {
+  margin-bottom: 3rem;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.faceit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.faceit-title {
+  font-size: 2rem;
+  margin: 0;
+  color: #fff;
+  font-family: 'UnifrakturCook', cursive;
+  letter-spacing: 0.05em;
+}
+
+.resolve-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.resolve-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.faceit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.faceit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+.faceit-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.02);
+  text-decoration: underline;
+}
+
+.faceit-name {
+  font-weight: bold;
+  color: #fff;
+}
+
+.faceit-elo {
+  color: #fff;
+}
+
+.faceit-diff {
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.loading {
+  color: #fff;
+  font-family: monospace;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
 .nick-list {
   margin-top: 2rem;
   display: flex;
