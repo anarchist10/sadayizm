@@ -119,10 +119,21 @@ export default function Home() {
                     display: 'block', 
                     textAlign: 'center',
                     color: nick.name === 'angry' ? '#ff0000' : 'inherit',
-                    textDecoration: nick.name === 'angry' ? 'line-through' : 'none'
+                    position: nick.name === 'angry' ? 'relative' : 'static'
                   }}
                 >
                   {nick.name}
+                  {nick.name === 'angry' && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '0',
+                      right: '0',
+                      height: '2px',
+                      backgroundColor: '#ff0000',
+                      transform: 'translateY(1px)'
+                    }} />
+                  )}
                 </a>
                 {nick.faceitApi && (
                   <>
