@@ -46,8 +46,11 @@ export default function Home() {
           // Solo multiplicar si el valor es mayor a 0
           parsedElo = eloValue > 0 ? Math.round(eloValue * 1000) : 0;
           
-          // Si el resultado tiene 3 dígitos (entre 100-999), agregar un 0 al final
-          if (parsedElo > 0 && parsedElo >= 100 && parsedElo <= 999) {
+          // Si el elo original termina en .0, .10, .20, etc., la API no incluye el 0 final
+          // Verificamos si el valor original termina en un múltiplo de 0.01
+          const originalValue = eloValue * 1000;
+          if (originalValue % 10 === 0 && parsedElo % 10 !== 0) {
+            // Si debería terminar en 0 pero no termina, agregamos el 0
             parsedElo = parsedElo * 10;
           }
         } else if (typeof eloValue === 'string') {
@@ -56,8 +59,10 @@ export default function Home() {
           const floatValue = parseFloat(cleanValue) || 0;
           parsedElo = floatValue > 0 ? Math.round(floatValue * 1000) : 0;
           
-          // Si el resultado tiene 3 dígitos (entre 100-999), agregar un 0 al final
-          if (parsedElo > 0 && parsedElo >= 100 && parsedElo <= 999) {
+          // Si el elo original termina en .0, .10, .20, etc., la API no incluye el 0 final
+          const originalValue = floatValue * 1000;
+          if (originalValue % 10 === 0 && parsedElo % 10 !== 0) {
+            // Si debería terminar en 0 pero no termina, agregamos el 0
             parsedElo = parsedElo * 10;
           }
         }
