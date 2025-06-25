@@ -14,6 +14,7 @@ const nicks = [
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
+  const [nikitoEloDiff, setNikitoEloDiff] = useState(null);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -28,6 +29,11 @@ export default function Home() {
           .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
       }
     });
+    // Obtener elo diff de nikito
+    fetch('https://api.jakobkristensen.com/76561198402344265/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
+      .then(res => res.json())
+      .then(data => setNikitoEloDiff(typeof data === 'number' ? data : parseInt(data)))
+      .catch(() => setNikitoEloDiff(null));
   }, []);
 
   useEffect(() => {
@@ -84,6 +90,19 @@ export default function Home() {
                 {nick.faceitApi && (
                   <>
                     <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
+                    {/* elo diff solo para nikito */}
+                    {nick.name === 'nikito' && nikitoEloDiff !== null && (
+                      <span style={{
+                        color: nikitoEloDiff > 0 ? 'limegreen' : nikitoEloDiff < 0 ? 'red' : 'gray',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '1.1rem',
+                        margin: '0 0.3rem'
+                      }}>
+                        {nikitoEloDiff > 0 ? '↑' : nikitoEloDiff < 0 ? '↓' : ''} {nikitoEloDiff > 0 ? '+' : ''}{nikitoEloDiff}
+                      </span>
+                    )}
                     <a
                       href={nick.faceitUrl}
                       target="_blank"
