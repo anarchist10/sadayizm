@@ -79,7 +79,11 @@ export default function Home() {
                   href={nick.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'block', textAlign: 'center' }}
+                  style={{ 
+                    display: 'block', 
+                    textAlign: 'center',
+                    color: nick.name === 'angry' ? '#ff0000' : 'inherit'
+                  }}
                 >
                   {nick.name}
                 </a>
