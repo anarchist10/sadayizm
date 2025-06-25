@@ -3,25 +3,27 @@ import Starfield from '../components/Starfield';
 import { useEffect, useState } from 'react';
 
 const nicks = [
-  { name: 'anar', url: 'https://steamcommunity.com/id/anrz/' },
-  { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/' },
-  { name: 'nyoh', url: 'https://steamcommunity.com/id/srz1/' },
-  { name: 'rks', url: 'https://steamcommunity.com/id/5t9/' },
-  { name: 'nikito', url: 'https://steamcommunity.com/id/nkto/' },
+  { name: 'anar', url: 'https://steamcommunity.com/id/anrz/', faceitApi: 'https://api.jakobkristensen.com/76561198860541170/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/ANARCHlST' },
+  { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
+  { name: 'nyoh', url: 'https://steamcommunity.com/id/srz1/', faceitApi: 'https://api.jakobkristensen.com/76561198374148982/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/kyrgios' },
+  { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
+  { name: 'nikito', url: 'https://steamcommunity.com/id/nkto/', faceitApi: 'https://api.jakobkristensen.com/76561198402344265/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/nikito' },
 ];
 
 export default function Home() {
-  const [elo, setElo] = useState(null);
+  const [elos, setElos] = useState({});
 
   useEffect(() => {
-    // Llamada a la API para obtener el ELO de Faceit de 'anar'
-    fetch('https://api.jakobkristensen.com/76561198860541170/{{elo}}[[America/Argentina/Buenos_Aires]]')
-      .then(res => res.json())
-      .then(data => {
-        // Suponiendo que el ELO viene como un número directamente
-        setElo(data.elo || data);
-      })
-      .catch(() => setElo('N/A'));
+    nicks.forEach(nick => {
+      if (nick.faceitApi) {
+        fetch(nick.faceitApi)
+          .then(res => res.json())
+          .then(data => {
+            setElos(prev => ({ ...prev, [nick.name]: data.elo || data }));
+          })
+          .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
+      }
+    });
   }, []);
 
   return (
@@ -44,16 +46,15 @@ export default function Home() {
               >
                 {nick.name}
               </a>
-              {nick.name === 'anar' && (
+              {nick.faceitApi && (
                 <>
-                  <span style={{ fontSize: '1.2rem' }}>{elo !== null ? elo : '...'}</span>
+                  <span style={{ fontSize: '1.2rem' }}>{elos[nick.name] !== undefined ? elos[nick.name] : '...'}</span>
                   <a
-                    href="https://www.faceit.com/es/players/ANARCHlST"
+                    href={nick.faceitUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ display: 'flex', alignItems: 'center' }}
                   >
-                    {/* Icono Faceit SVG */}
                     <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
                     </svg>
