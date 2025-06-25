@@ -33,7 +33,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet" />
       </Head>
       <Starfield />
-      <audio src="/slutty sonny.mp3" autoPlay loop style={{ display: 'none' }} />
+      <audio src="/sluttysonny.mp3" autoPlay loop style={{ display: 'none' }} />
       <div className="center-content">
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
