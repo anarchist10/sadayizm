@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Starfield from '../components/Starfield';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 const nicks = [
   { name: 'anar', url: 'https://steamcommunity.com/id/anrz/', faceitApi: 'https://api.jakobkristensen.com/76561198860541170/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/ANARCHlST' },
@@ -12,6 +12,8 @@ const nicks = [
 
 export default function Home() {
   const [elos, setElos] = useState({});
+  const audioRef = useRef(null);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     nicks.forEach(nick => {
@@ -26,6 +28,19 @@ export default function Home() {
     });
   }, []);
 
+  useEffect(() => {
+    const handleFirstClick = () => {
+      if (!startedRef.current && audioRef.current) {
+        audioRef.current.play();
+        startedRef.current = true;
+      }
+    };
+    window.addEventListener('click', handleFirstClick);
+    return () => {
+      window.removeEventListener('click', handleFirstClick);
+    };
+  }, []);
+
   return (
     <>
       <Head>
@@ -33,7 +48,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet" />
       </Head>
       <Starfield />
-      <audio src="/sluttysonny.mp3" autoPlay loop style={{ display: 'none' }} />
+      <audio ref={audioRef} src="/sluttysonny.mp3" loop style={{ display: 'none' }} />
       <div className="center-content">
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
