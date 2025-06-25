@@ -67,17 +67,7 @@ export default function Home() {
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
-            <div key={nick.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'column' }}>
-              {idx === 0 && (
-                <span title="Top ELO" style={{ display: 'flex', alignItems: 'center', marginBottom: '-0.3rem' }}>
-                  <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2 16L7 5L16 14L25 5L30 16" stroke="#fff" strokeWidth="2" fill="none"/>
-                    <circle cx="7" cy="5" r="2" fill="#fff" stroke="#000" strokeWidth="1"/>
-                    <circle cx="16" cy="14" r="2" fill="#fff" stroke="#000" strokeWidth="1"/>
-                    <circle cx="25" cy="5" r="2" fill="#fff" stroke="#000" strokeWidth="1"/>
-                  </svg>
-                </span>
-              )}
+            <div key={nick.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <a
                 className="nick-link"
                 href={nick.url}
