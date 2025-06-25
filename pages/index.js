@@ -66,7 +66,7 @@ export default function Home() {
       .catch(() => setAngryEloDiff(null));
     setTimeout(() => setShowAngryEloDiff(true), 3000);
     setTimeout(() => setShowAngryEloDiff(false), 6000);
-    // Obtener elo diff de rks
+    // Obtener elo diff de rks (bendecido)
     fetch('https://api.jakobkristensen.com/76561198023120655/{{todayEloDiff}}[[America/Argentina/Buenos_Aires]]')
       .then(res => res.json())
       .then(data => setRksEloDiff(typeof data === 'number' ? data : parseInt(data)))
@@ -197,7 +197,7 @@ export default function Home() {
                         {angryEloDiff > 0 ? '↑' : angryEloDiff < 0 ? '↓' : ''} {angryEloDiff > 0 ? '+' : ''}{angryEloDiff}
                       </span>
                     )}
-                    {/* elo diff para rks */}
+                    {/* elo diff para rks (bendecido) */}
                     {nick.name === 'rks' && rksEloDiff !== null && showRksEloDiff && (
                       <span
                         style={{
