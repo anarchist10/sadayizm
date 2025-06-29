@@ -115,9 +115,13 @@ export default function Home() {
   const [hoveredNick, setHoveredNick] = useState(null);
   const [loadingElos, setLoadingElos] = useState(true);
   const [showTrollList, setShowTrollList] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [trollList, setTrollList] = useState([]);
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
+  const [loadingTrolls, setLoadingTrolls] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -129,51 +133,94 @@ export default function Home() {
       setKeySequence(newSequence);
       
       if (newSequence === 'lista') {
-        setShowTrollList(!showTrollList);
+        setShowPasswordPrompt(true);
         setKeySequence(''); // Reset sequence
       }
     };
 
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [keySequence, showTrollList]);
+  }, [keySequence]);
 
-  // Cargar troll list del localStorage
-  useEffect(() => {
-    const savedTrollList = localStorage.getItem('sadayizm-trolllist');
-    if (savedTrollList) {
-      setTrollList(JSON.parse(savedTrollList));
+  // Manejar verificación de contraseña
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === '21') {
+      setShowPasswordPrompt(false);
+      setShowTrollList(true);
+      setPassword('');
+      setPasswordError('');
+      loadTrollList();
+    } else {
+      setPasswordError('Contraseña incorrecta');
+      setPassword('');
     }
-  }, []);
-
-  // Guardar troll list en localStorage
-  const saveTrollList = (newTrollList) => {
-    setTrollList(newTrollList);
-    localStorage.setItem('sadayizm-trolllist', JSON.stringify(newTrollList));
   };
 
-  // Agregar troll a la lista
-  const addTroll = () => {
+  // Cargar lista de trolls desde la API
+  const loadTrollList = async () => {
+    setLoadingTrolls(true);
+    try {
+      const response = await fetch('/api/trolls');
+      if (response.ok) {
+        const data = await response.json();
+        setTrollList(data);
+      } else {
+        console.error('Error loading troll list:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error loading troll list:', error);
+    }
+    setLoadingTrolls(false);
+  };
+
+  // Agregar troll a la base de datos
+  const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
       const troll = {
-        id: Date.now(),
         nick: newTroll.nick.trim(),
         steamId: extractSteamId(newTroll.steamId.trim()),
         reason: newTroll.reason.trim() || 'Sin razón especificada',
-        dateAdded: new Date().toLocaleDateString('es-AR'),
         faceitUrl: generateFaceitUrl(extractSteamId(newTroll.steamId.trim()))
       };
       
-      const newTrollList = [...trollList, troll];
-      saveTrollList(newTrollList);
-      setNewTroll({ nick: '', steamId: '', reason: '' });
+      try {
+        const response = await fetch('/api/trolls', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(troll),
+        });
+
+        if (response.ok) {
+          const newTrollData = await response.json();
+          setTrollList(prev => [...prev, newTrollData]);
+          setNewTroll({ nick: '', steamId: '', reason: '' });
+        } else {
+          console.error('Error adding troll:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error adding troll:', error);
+      }
     }
   };
 
-  // Remover troll de la lista
-  const removeTroll = (trollId) => {
-    const newTrollList = trollList.filter(troll => troll.id !== trollId);
-    saveTrollList(newTrollList);
+  // Remover troll de la base de datos
+  const removeTroll = async (trollId) => {
+    try {
+      const response = await fetch(`/api/trolls?id=${trollId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setTrollList(prev => prev.filter(troll => troll.id !== trollId));
+      } else {
+        console.error('Error removing troll:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error removing troll:', error);
+    }
   };
 
   useEffect(() => {
@@ -258,6 +305,45 @@ export default function Home() {
       <Starfield />
       <audio ref={audioRef} src="/sluttysonny.mp3" loop style={{ display: 'none' }} />
       
+      {/* Password Prompt Modal */}
+      {showPasswordPrompt && (
+        <div className="password-modal">
+          <div className="password-content">
+            <h2>🔒 Acceso Restringido</h2>
+            <p>Ingresa la contraseña para acceder a la lista:</p>
+            <form onSubmit={handlePasswordSubmit}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Contraseña"
+                className="password-input"
+                autoFocus
+              />
+              {passwordError && (
+                <div className="password-error">{passwordError}</div>
+              )}
+              <div className="password-buttons">
+                <button type="submit" className="password-submit">
+                  Acceder
+                </button>
+                <button 
+                  type="button" 
+                  className="password-cancel"
+                  onClick={() => {
+                    setShowPasswordPrompt(false);
+                    setPassword('');
+                    setPasswordError('');
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Troll List Modal */}
       {showTrollList && (
         <div className="troll-modal">
@@ -310,7 +396,9 @@ export default function Home() {
             {/* Lista de trolls */}
             <div className="troll-list-section">
               <h3>📋 Trolls Registrados ({trollList.length})</h3>
-              {trollList.length === 0 ? (
+              {loadingTrolls ? (
+                <div className="loading-trolls">Cargando lista...</div>
+              ) : trollList.length === 0 ? (
                 <p className="empty-list">No hay trolls registrados</p>
               ) : (
                 <div className="troll-list">
@@ -320,7 +408,7 @@ export default function Home() {
                         <div className="troll-nick">{troll.nick}</div>
                         <div className="troll-details">
                           <span className="troll-steamid">Steam: {troll.steamId}</span>
-                          <span className="troll-date">Agregado: {troll.dateAdded}</span>
+                          <span className="troll-date">Agregado: {new Date(troll.dateAdded).toLocaleDateString('es-AR')}</span>
                         </div>
                         <div className="troll-reason">"{troll.reason}"</div>
                       </div>

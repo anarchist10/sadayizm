@@ -95,6 +95,115 @@ body {
   }
 }
 
+/* Password Modal Styles */
+.password-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
+  animation: fadeInModal 0.3s ease-in-out;
+}
+
+.password-content {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+}
+
+.password-content h2 {
+  color: #ffd700;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-family: 'SadayizmFont', monospace;
+}
+
+.password-content p {
+  color: #ccc;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.password-input {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'SadayizmFont', monospace;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+}
+
+.password-input:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+}
+
+.password-error {
+  color: #ff4444;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  font-family: 'SadayizmFont', monospace;
+}
+
+.password-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.password-submit {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-family: 'SadayizmFont', monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
+}
+
+.password-submit:hover {
+  background: linear-gradient(135deg, #ffe700 0%, #ffc700 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.password-cancel {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 1px solid #666;
+  border-radius: 6px;
+  color: #ccc;
+  font-family: 'SadayizmFont', monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.password-cancel:hover {
+  border-color: #999;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /* Troll List Modal Styles */
 .troll-modal {
   position: fixed;
@@ -226,6 +335,13 @@ body {
   color: #fff;
   font-size: 1.3rem;
   margin-bottom: 1rem;
+  font-family: 'SadayizmFont', monospace;
+}
+
+.loading-trolls {
+  color: #ffd700;
+  text-align: center;
+  padding: 2rem;
   font-family: 'SadayizmFont', monospace;
 }
 
@@ -394,5 +510,14 @@ body {
   .troll-details {
     flex-direction: column;
     gap: 0.25rem;
+  }
+  
+  .password-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+  
+  .password-buttons {
+    flex-direction: column;
   }
 }
