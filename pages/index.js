@@ -79,14 +79,45 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
   }
 }
 
+// Función para extraer Steam ID de URL
+function extractSteamId(steamUrl) {
+  if (!steamUrl) return '';
+  
+  // Buscar patrones de Steam ID en la URL
+  const patterns = [
+    /\/id\/([^\/]+)/,           // Custom URL
+    /\/profiles\/(\d+)/,        // Steam ID64
+    /(\d{17})/                  // Steam ID64 directo
+  ];
+  
+  for (const pattern of patterns) {
+    const match = steamUrl.match(pattern);
+    if (match) return match[1];
+  }
+  
+  return steamUrl;
+}
+
+// Función para generar URL de Faceit desde Steam ID
+function generateFaceitUrl(steamId) {
+  // Si parece ser un Steam ID64 (17 dígitos), usar directamente
+  if (/^\d{17}$/.test(steamId)) {
+    return `https://www.faceit.com/es/players-modal/${steamId}`;
+  }
+  
+  // Si es un custom URL, buscar por nickname
+  return `https://www.faceit.com/es/search/players?q=${steamId}`;
+}
+
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [hoveredNick, setHoveredNick] = useState(null);
   const [loadingElos, setLoadingElos] = useState(true);
-  const [showBlacklist, setShowBlacklist] = useState(false);
-  const [blacklist, setBlacklist] = useState([]);
+  const [showTrollList, setShowTrollList] = useState(false);
+  const [trollList, setTrollList] = useState([]);
   const [keySequence, setKeySequence] = useState('');
+  const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -98,46 +129,51 @@ export default function Home() {
       setKeySequence(newSequence);
       
       if (newSequence === 'lista') {
-        setShowBlacklist(!showBlacklist);
+        setShowTrollList(!showTrollList);
         setKeySequence(''); // Reset sequence
       }
     };
 
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [keySequence, showBlacklist]);
+  }, [keySequence, showTrollList]);
 
-  // Cargar blacklist del localStorage
+  // Cargar troll list del localStorage
   useEffect(() => {
-    const savedBlacklist = localStorage.getItem('sadayizm-blacklist');
-    if (savedBlacklist) {
-      setBlacklist(JSON.parse(savedBlacklist));
+    const savedTrollList = localStorage.getItem('sadayizm-trolllist');
+    if (savedTrollList) {
+      setTrollList(JSON.parse(savedTrollList));
     }
   }, []);
 
-  // Guardar blacklist en localStorage
-  const saveBlacklist = (newBlacklist) => {
-    setBlacklist(newBlacklist);
-    localStorage.setItem('sadayizm-blacklist', JSON.stringify(newBlacklist));
+  // Guardar troll list en localStorage
+  const saveTrollList = (newTrollList) => {
+    setTrollList(newTrollList);
+    localStorage.setItem('sadayizm-trolllist', JSON.stringify(newTrollList));
   };
 
-  // Agregar nick a blacklist
-  const addToBlacklist = (nickName) => {
-    if (!blacklist.includes(nickName)) {
-      const newBlacklist = [...blacklist, nickName];
-      saveBlacklist(newBlacklist);
+  // Agregar troll a la lista
+  const addTroll = () => {
+    if (newTroll.nick.trim() && newTroll.steamId.trim()) {
+      const troll = {
+        id: Date.now(),
+        nick: newTroll.nick.trim(),
+        steamId: extractSteamId(newTroll.steamId.trim()),
+        reason: newTroll.reason.trim() || 'Sin razón especificada',
+        dateAdded: new Date().toLocaleDateString('es-AR'),
+        faceitUrl: generateFaceitUrl(extractSteamId(newTroll.steamId.trim()))
+      };
+      
+      const newTrollList = [...trollList, troll];
+      saveTrollList(newTrollList);
+      setNewTroll({ nick: '', steamId: '', reason: '' });
     }
   };
 
-  // Remover nick de blacklist
-  const removeFromBlacklist = (nickName) => {
-    const newBlacklist = blacklist.filter(name => name !== nickName);
-    saveBlacklist(newBlacklist);
-  };
-
-  // Filtrar nicks según blacklist
-  const getVisibleNicks = () => {
-    return sortedNicks.filter(nick => !blacklist.includes(nick.name));
+  // Remover troll de la lista
+  const removeTroll = (trollId) => {
+    const newTrollList = trollList.filter(troll => troll.id !== trollId);
+    saveTrollList(newTrollList);
   };
 
   useEffect(() => {
@@ -213,9 +249,6 @@ export default function Home() {
     }
   };
 
-  const visibleNicks = getVisibleNicks();
-  const topNick = visibleNicks[0];
-
   return (
     <>
       <Head>
@@ -225,58 +258,96 @@ export default function Home() {
       <Starfield />
       <audio ref={audioRef} src="/sluttysonny.mp3" loop style={{ display: 'none' }} />
       
-      {/* Blacklist Modal */}
-      {showBlacklist && (
-        <div className="blacklist-modal">
-          <div className="blacklist-content">
-            <div className="blacklist-header">
-              <h2>🚫 Lista Negra</h2>
+      {/* Troll List Modal */}
+      {showTrollList && (
+        <div className="troll-modal">
+          <div className="troll-content">
+            <div className="troll-header">
+              <h2>🚨 Lista de Trolls/Tóxicos</h2>
               <button 
                 className="close-btn"
-                onClick={() => setShowBlacklist(false)}
+                onClick={() => setShowTrollList(false)}
               >
                 ✕
               </button>
             </div>
             
-            <div className="blacklist-section">
-              <h3>Nicks Ocultos ({blacklist.length})</h3>
-              {blacklist.length === 0 ? (
-                <p className="empty-list">No hay nicks en la lista negra</p>
+            {/* Formulario para agregar nuevo troll */}
+            <div className="add-troll-section">
+              <h3>➕ Agregar Troll</h3>
+              <div className="troll-form">
+                <input
+                  type="text"
+                  placeholder="Nick del troll"
+                  value={newTroll.nick}
+                  onChange={(e) => setNewTroll({...newTroll, nick: e.target.value})}
+                  className="troll-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Steam ID o URL completa"
+                  value={newTroll.steamId}
+                  onChange={(e) => setNewTroll({...newTroll, steamId: e.target.value})}
+                  className="troll-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Razón (opcional)"
+                  value={newTroll.reason}
+                  onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
+                  className="troll-input"
+                />
+                <button 
+                  className="add-troll-btn"
+                  onClick={addTroll}
+                  disabled={!newTroll.nick.trim() || !newTroll.steamId.trim()}
+                >
+                  Agregar Troll
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de trolls */}
+            <div className="troll-list-section">
+              <h3>📋 Trolls Registrados ({trollList.length})</h3>
+              {trollList.length === 0 ? (
+                <p className="empty-list">No hay trolls registrados</p>
               ) : (
-                <div className="blacklisted-nicks">
-                  {blacklist.map(nickName => (
-                    <div key={nickName} className="blacklisted-nick">
-                      <span>{nickName}</span>
-                      <button 
-                        className="restore-btn"
-                        onClick={() => removeFromBlacklist(nickName)}
-                        title="Restaurar nick"
-                      >
-                        ↩️
-                      </button>
+                <div className="troll-list">
+                  {trollList.map(troll => (
+                    <div key={troll.id} className="troll-item">
+                      <div className="troll-info">
+                        <div className="troll-nick">{troll.nick}</div>
+                        <div className="troll-details">
+                          <span className="troll-steamid">Steam: {troll.steamId}</span>
+                          <span className="troll-date">Agregado: {troll.dateAdded}</span>
+                        </div>
+                        <div className="troll-reason">"{troll.reason}"</div>
+                      </div>
+                      <div className="troll-actions">
+                        <a
+                          href={troll.faceitUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="faceit-btn"
+                          title="Ver perfil en Faceit"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
+                          </svg>
+                        </a>
+                        <button 
+                          className="remove-troll-btn"
+                          onClick={() => removeTroll(troll.id)}
+                          title="Eliminar de la lista"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-
-            <div className="blacklist-section">
-              <h3>Nicks Visibles</h3>
-              <div className="visible-nicks">
-                {nicks.filter(nick => !blacklist.includes(nick.name)).map(nick => (
-                  <div key={nick.name} className="visible-nick">
-                    <span>{nick.name}</span>
-                    <button 
-                      className="hide-btn"
-                      onClick={() => addToBlacklist(nick.name)}
-                      title="Ocultar nick"
-                    >
-                      🚫
-                    </button>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -290,7 +361,7 @@ export default function Home() {
           </div>
         )}
         <div className="nick-list">
-          {visibleNicks.map((nick, idx) => (
+          {sortedNicks.map((nick, idx) => (
             <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
               {idx === 0 && elos[nick.name] !== 'N/A' && elos[nick.name] > 0 && (
                 <img src="/corona.png" alt="corona" style={{ width: '100px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
