@@ -84,9 +84,61 @@ export default function Home() {
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [hoveredNick, setHoveredNick] = useState(null);
   const [loadingElos, setLoadingElos] = useState(true);
+  const [showBlacklist, setShowBlacklist] = useState(false);
+  const [blacklist, setBlacklist] = useState([]);
+  const [keySequence, setKeySequence] = useState('');
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
+
+  // Detectar secuencia de teclas "lista"
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      const newSequence = (keySequence + e.key.toLowerCase()).slice(-5);
+      setKeySequence(newSequence);
+      
+      if (newSequence === 'lista') {
+        setShowBlacklist(!showBlacklist);
+        setKeySequence(''); // Reset sequence
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+    return () => window.removeEventListener('keypress', handleKeyPress);
+  }, [keySequence, showBlacklist]);
+
+  // Cargar blacklist del localStorage
+  useEffect(() => {
+    const savedBlacklist = localStorage.getItem('sadayizm-blacklist');
+    if (savedBlacklist) {
+      setBlacklist(JSON.parse(savedBlacklist));
+    }
+  }, []);
+
+  // Guardar blacklist en localStorage
+  const saveBlacklist = (newBlacklist) => {
+    setBlacklist(newBlacklist);
+    localStorage.setItem('sadayizm-blacklist', JSON.stringify(newBlacklist));
+  };
+
+  // Agregar nick a blacklist
+  const addToBlacklist = (nickName) => {
+    if (!blacklist.includes(nickName)) {
+      const newBlacklist = [...blacklist, nickName];
+      saveBlacklist(newBlacklist);
+    }
+  };
+
+  // Remover nick de blacklist
+  const removeFromBlacklist = (nickName) => {
+    const newBlacklist = blacklist.filter(name => name !== nickName);
+    saveBlacklist(newBlacklist);
+  };
+
+  // Filtrar nicks según blacklist
+  const getVisibleNicks = () => {
+    return sortedNicks.filter(nick => !blacklist.includes(nick.name));
+  };
 
   useEffect(() => {
     // Función para cargar ELOs de forma secuencial (evita sobrecargar la API)
@@ -161,6 +213,9 @@ export default function Home() {
     }
   };
 
+  const visibleNicks = getVisibleNicks();
+  const topNick = visibleNicks[0];
+
   return (
     <>
       <Head>
@@ -169,6 +224,64 @@ export default function Home() {
       </Head>
       <Starfield />
       <audio ref={audioRef} src="/sluttysonny.mp3" loop style={{ display: 'none' }} />
+      
+      {/* Blacklist Modal */}
+      {showBlacklist && (
+        <div className="blacklist-modal">
+          <div className="blacklist-content">
+            <div className="blacklist-header">
+              <h2>🚫 Lista Negra</h2>
+              <button 
+                className="close-btn"
+                onClick={() => setShowBlacklist(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="blacklist-section">
+              <h3>Nicks Ocultos ({blacklist.length})</h3>
+              {blacklist.length === 0 ? (
+                <p className="empty-list">No hay nicks en la lista negra</p>
+              ) : (
+                <div className="blacklisted-nicks">
+                  {blacklist.map(nickName => (
+                    <div key={nickName} className="blacklisted-nick">
+                      <span>{nickName}</span>
+                      <button 
+                        className="restore-btn"
+                        onClick={() => removeFromBlacklist(nickName)}
+                        title="Restaurar nick"
+                      >
+                        ↩️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="blacklist-section">
+              <h3>Nicks Visibles</h3>
+              <div className="visible-nicks">
+                {nicks.filter(nick => !blacklist.includes(nick.name)).map(nick => (
+                  <div key={nick.name} className="visible-nick">
+                    <span>{nick.name}</span>
+                    <button 
+                      className="hide-btn"
+                      onClick={() => addToBlacklist(nick.name)}
+                      title="Ocultar nick"
+                    >
+                      🚫
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="center-content">
         <div className="gothic-title">sadayizm</div>
         {loadingElos && (
@@ -177,7 +290,7 @@ export default function Home() {
           </div>
         )}
         <div className="nick-list">
-          {sortedNicks.map((nick, idx) => (
+          {visibleNicks.map((nick, idx) => (
             <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
               {idx === 0 && elos[nick.name] !== 'N/A' && elos[nick.name] > 0 && (
                 <img src="/corona.png" alt="corona" style={{ width: '100px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
