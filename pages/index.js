@@ -21,6 +21,7 @@ export default function Home() {
   const [hoveredNick, setHoveredNick] = useState(null);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
+  const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
 
   useEffect(() => {
     nicks.forEach(nick => {
@@ -95,6 +96,19 @@ export default function Home() {
     };
   }, []);
 
+  // Manejar pausa/reanudación de música de fondo
+  const handleVideoHover = (isHovering) => {
+    if (audioRef.current && startedRef.current) {
+      if (isHovering) {
+        audioRef.current.pause();
+        setBackgroundMusicPaused(true);
+      } else {
+        audioRef.current.play();
+        setBackgroundMusicPaused(false);
+      }
+    }
+  };
+
   return (
     <>
       <Head>
@@ -123,8 +137,18 @@ export default function Home() {
                     color: idx === 0 ? '#FFD700' : (nick.name === 'angry' ? '#ff0000' : 'inherit'),
                     position: nick.name === 'angry' ? 'relative' : 'static'
                   }}
-                  onMouseEnter={() => nick.videoId && setHoveredNick(nick.name)}
-                  onMouseLeave={() => nick.videoId && setHoveredNick(null)}
+                  onMouseEnter={() => {
+                    if (nick.videoId) {
+                      setHoveredNick(nick.name);
+                      handleVideoHover(true);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (nick.videoId) {
+                      setHoveredNick(null);
+                      handleVideoHover(false);
+                    }
+                  }}
                 >
                   {nick.name}
                   {nick.name === 'angry' && (
@@ -162,7 +186,7 @@ export default function Home() {
                   <iframe
                     width="320"
                     height="180"
-                    src={`https://www.youtube.com/embed/${nick.videoId}?autoplay=1&mute=1&loop=1&playlist=${nick.videoId}`}
+                    src={`https://www.youtube.com/embed/${nick.videoId}?autoplay=1&loop=1&playlist=${nick.videoId}`}
                     title="ElComba clip"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
