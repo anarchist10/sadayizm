@@ -19,6 +19,7 @@ export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [showAnarCard, setShowAnarCard] = useState(false);
+  const [anarAvatar, setAnarAvatar] = useState('');
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -35,6 +36,28 @@ export default function Home() {
           .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
       }
     });
+
+    // Obtener avatar de Steam para anar
+    const anarNick = nicks.find(nick => nick.name === 'anar');
+    if (anarNick && anarNick.steamId) {
+      // Usar un proxy CORS o una API alternativa para obtener el avatar
+      // Como alternativa, podemos usar la URL directa del perfil de Steam
+      fetch(`https://steamcommunity.com/profiles/${anarNick.steamId}?xml=1`)
+        .then(res => res.text())
+        .then(xmlText => {
+          // Parsear el XML para obtener la URL del avatar
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+          const avatarFull = xmlDoc.querySelector('avatarFull');
+          if (avatarFull) {
+            setAnarAvatar(avatarFull.textContent);
+          }
+        })
+        .catch(() => {
+          // Fallback: usar una URL construida manualmente
+          setAnarAvatar(`https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/${anarNick.steamId.slice(-2)}/${anarNick.steamId}_full.jpg`);
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -150,12 +173,19 @@ export default function Home() {
               {nick.name === 'anar' && showAnarCard && (
                 <div className="anar-hover-card">
                   <img 
-                    src={`https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/${nick.steamId.slice(-2)}/${nick.steamId}_full.jpg`}
+                    src={anarAvatar || `https://avatars.steamstatic.com/${nick.steamId.slice(-2)}/${nick.steamId}_full.jpg`}
                     alt="anar avatar"
                     style={{ width: '100px', height: '100px', borderRadius: '8px' }}
                     onError={(e) => {
-                      // Fallback si la imagen no carga
-                      e.target.src = `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg`;
+                      // Múltiples fallbacks
+                      if (e.target.src.includes('steamstatic')) {
+                        e.target.src = `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/${nick.steamId.slice(-2)}/${nick.steamId}_full.jpg`;
+                      } else if (e.target.src.includes('steamcdn-a')) {
+                        e.target.src = `https://steamuserimages-a.akamaihd.net/ugc/${nick.steamId}/${nick.steamId}_full.jpg`;
+                      } else {
+                        // Último fallback: avatar por defecto de Steam
+                        e.target.src = 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg';
+                      }
                     }}
                   />
                   <div style={{ marginTop: '8px', fontSize: '0.9rem', color: '#ccc' }}>
