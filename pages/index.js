@@ -3,16 +3,16 @@ import Starfield from '../components/Starfield';
 import { useEffect, useState, useRef } from 'react';
 
 const nicks = [
-  { name: 'anar', url: 'https://steamcommunity.com/id/anrz/', faceitApi: 'https://api.jakobkristensen.com/76561198860541170', faceitUrl: 'https://www.faceit.com/es/players/ANARCHlST' },
-  { name: 'nikito', url: 'https://steamcommunity.com/id/nkto/', faceitApi: 'https://api.jakobkristensen.com/76561198402344265', faceitUrl: 'https://www.faceit.com/es/players/nikito' },
-  { name: 'nyoh', url: 'https://steamcommunity.com/id/srz1/', faceitApi: 'https://api.jakobkristensen.com/76561198374148982', faceitUrl: 'https://www.faceit.com/es/players/kyrgios' },
-  { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
-  { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
-  { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198108305712', faceitUrl: 'https://www.faceit.com/es/players/daker' },
-  { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
-  { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
-  { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
+  { name: 'anar', url: 'https://steamcommunity.com/id/anrz/', faceitApi: 'https://api.jakobkristensen.com/76561198860541170/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/ANARCHlST' },
+  { name: 'nikito', url: 'https://steamcommunity.com/id/nkto/', faceitApi: 'https://api.jakobkristensen.com/76561198402344265/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/nikito' },
+  { name: 'nyoh', url: 'https://steamcommunity.com/id/srz1/', faceitApi: 'https://api.jakobkristensen.com/76561198374148982/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/kyrgios' },
+  { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
+  { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
+  { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
+  { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
+  { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
 ];
 
 // Función simplificada para parsear ELO
@@ -77,6 +77,82 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
   }
+}
+
+// Función mejorada para extraer Steam ID de URL o texto
+function extractSteamId(input) {
+  if (!input) return '';
+  
+  const cleanInput = input.trim();
+  
+  // Si ya es un Steam ID64 (17 dígitos)
+  if (/^\d{17}$/.test(cleanInput)) {
+    return cleanInput;
+  }
+  
+  // Buscar Steam ID64 en URLs o texto
+  const steamId64Match = cleanInput.match(/\b(7656119\d{10})\b/);
+  if (steamId64Match) {
+    return steamId64Match[1];
+  }
+  
+  // Buscar custom URL en Steam URLs
+  const customUrlMatch = cleanInput.match(/steamcommunity\.com\/id\/([^\/\s]+)/);
+  if (customUrlMatch) {
+    return customUrlMatch[1];
+  }
+  
+  // Buscar profile URL
+  const profileMatch = cleanInput.match(/steamcommunity\.com\/profiles\/(\d+)/);
+  if (profileMatch) {
+    return profileMatch[1];
+  }
+  
+  // Si no encuentra nada específico, devolver el input limpio
+  return cleanInput.replace(/[^\w\d]/g, '');
+}
+
+// Función para generar URL de Steam
+function generateSteamUrl(steamId) {
+  if (!steamId) return '#';
+  
+  // Si es Steam ID64 (17 dígitos), usar URL de profile
+  if (/^\d{17}$/.test(steamId)) {
+    return `https://steamcommunity.com/profiles/${steamId}`;
+  }
+  
+  // Si es custom URL, usar URL de id
+  return `https://steamcommunity.com/id/${steamId}`;
+}
+
+// Función para generar URL de FaceitFinder
+function generateFaceitFinderUrl(steamId) {
+  if (!steamId) return '#';
+  
+  // FaceitFinder funciona mejor con Steam ID64
+  if (/^\d{17}$/.test(steamId)) {
+    return `https://faceitfinder.com/profile/${steamId}`;
+  }
+  
+  // Para custom URLs, intentar buscar por nombre
+  return `https://faceitfinder.com/search/${steamId}`;
+}
+
+// Función para determinar si un Steam ID es válido
+function isValidSteamId(steamId) {
+  if (!steamId) return false;
+  
+  // Steam ID64 válido (debe empezar con 7656119 y tener 17 dígitos)
+  if (/^7656119\d{10}$/.test(steamId)) {
+    return true;
+  }
+  
+  // Custom URL válido (letras, números, guiones, entre 3-32 caracteres)
+  if (/^[a-zA-Z0-9_-]{3,32}$/.test(steamId)) {
+    return true;
+  }
+  
+  return false;
 }
 
 export default function Home() {
@@ -147,12 +223,19 @@ export default function Home() {
   // Agregar troll a la base de datos
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
+      const extractedSteamId = extractSteamId(newTroll.steamId.trim());
+      
+      if (!isValidSteamId(extractedSteamId)) {
+        alert('Steam ID no válido. Debe ser un Steam ID64 (17 dígitos) o un nombre de usuario válido.');
+        return;
+      }
+      
       const troll = {
         nick: newTroll.nick.trim(),
-        steamId: newTroll.steamId.trim(),
+        steamId: extractedSteamId,
         reason: newTroll.reason.trim() || 'Sin razón especificada',
-        steamUrl: `https://steamcommunity.com/profiles/${newTroll.steamId.trim()}`,
-        faceitFinderUrl: `https://faceitfinder.com/profile/${newTroll.steamId.trim()}`
+        steamUrl: generateSteamUrl(extractedSteamId),
+        faceitFinderUrl: generateFaceitFinderUrl(extractedSteamId)
       };
       
       try {
@@ -346,7 +429,7 @@ export default function Home() {
                 />
                 <input
                   type="text"
-                  placeholder="Steam ID"
+                  placeholder="Steam ID64 o URL de Steam completa"
                   value={newTroll.steamId}
                   onChange={(e) => setNewTroll({...newTroll, steamId: e.target.value})}
                   className="troll-input"
@@ -358,6 +441,9 @@ export default function Home() {
                   onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
                   className="troll-input"
                 />
+                <div className="steam-id-help">
+                  💡 <strong>Tip:</strong> Puedes pegar la URL completa de Steam o solo el Steam ID64
+                </div>
                 <button 
                   className="add-troll-btn"
                   onClick={addTroll}
