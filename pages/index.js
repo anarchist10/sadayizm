@@ -79,82 +79,6 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
   }
 }
 
-// Función mejorada para extraer Steam ID de URL o texto
-function extractSteamId(input) {
-  if (!input) return '';
-  
-  const cleanInput = input.trim();
-  
-  // Si ya es un Steam ID64 (17 dígitos)
-  if (/^\d{17}$/.test(cleanInput)) {
-    return cleanInput;
-  }
-  
-  // Buscar Steam ID64 en URLs o texto
-  const steamId64Match = cleanInput.match(/\b(7656119\d{10})\b/);
-  if (steamId64Match) {
-    return steamId64Match[1];
-  }
-  
-  // Buscar custom URL en Steam URLs
-  const customUrlMatch = cleanInput.match(/steamcommunity\.com\/id\/([^\/\s]+)/);
-  if (customUrlMatch) {
-    return customUrlMatch[1];
-  }
-  
-  // Buscar profile URL
-  const profileMatch = cleanInput.match(/steamcommunity\.com\/profiles\/(\d+)/);
-  if (profileMatch) {
-    return profileMatch[1];
-  }
-  
-  // Si no encuentra nada específico, devolver el input limpio
-  return cleanInput.replace(/[^\w\d]/g, '');
-}
-
-// Función para generar URL de Steam
-function generateSteamUrl(steamId) {
-  if (!steamId) return '#';
-  
-  // Si es Steam ID64 (17 dígitos), usar URL de profile
-  if (/^\d{17}$/.test(steamId)) {
-    return `https://steamcommunity.com/profiles/${steamId}`;
-  }
-  
-  // Si es custom URL, usar URL de id
-  return `https://steamcommunity.com/id/${steamId}`;
-}
-
-// Función para generar URL de FaceitFinder
-function generateFaceitFinderUrl(steamId) {
-  if (!steamId) return '#';
-  
-  // FaceitFinder funciona mejor con Steam ID64
-  if (/^\d{17}$/.test(steamId)) {
-    return `https://faceitfinder.com/profile/${steamId}`;
-  }
-  
-  // Para custom URLs, intentar buscar por nombre
-  return `https://faceitfinder.com/search/${steamId}`;
-}
-
-// Función para determinar si un Steam ID es válido
-function isValidSteamId(steamId) {
-  if (!steamId) return false;
-  
-  // Steam ID64 válido (debe empezar con 7656119 y tener 17 dígitos)
-  if (/^7656119\d{10}$/.test(steamId)) {
-    return true;
-  }
-  
-  // Custom URL válido (letras, números, guiones, entre 3-32 caracteres)
-  if (/^[a-zA-Z0-9_-]{3,32}$/.test(steamId)) {
-    return true;
-  }
-  
-  return false;
-}
-
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
@@ -223,19 +147,12 @@ export default function Home() {
   // Agregar troll a la base de datos
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
-      const extractedSteamId = extractSteamId(newTroll.steamId.trim());
-      
-      if (!isValidSteamId(extractedSteamId)) {
-        alert('Steam ID no válido. Debe ser un Steam ID64 (17 dígitos) o un nombre de usuario válido.');
-        return;
-      }
-      
       const troll = {
         nick: newTroll.nick.trim(),
-        steamId: extractedSteamId,
+        steamId: newTroll.steamId.trim(),
         reason: newTroll.reason.trim() || 'Sin razón especificada',
-        steamUrl: generateSteamUrl(extractedSteamId),
-        faceitFinderUrl: generateFaceitFinderUrl(extractedSteamId)
+        steamUrl: `https://steamcommunity.com/profiles/${newTroll.steamId.trim()}`,
+        faceitFinderUrl: `https://faceitfinder.com/profile/${newTroll.steamId.trim()}`
       };
       
       try {
@@ -429,7 +346,7 @@ export default function Home() {
                 />
                 <input
                   type="text"
-                  placeholder="Steam ID64 o URL de Steam completa"
+                  placeholder="Steam ID"
                   value={newTroll.steamId}
                   onChange={(e) => setNewTroll({...newTroll, steamId: e.target.value})}
                   className="troll-input"
@@ -441,9 +358,6 @@ export default function Home() {
                   onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
                   className="troll-input"
                 />
-                <div className="steam-id-help">
-                  💡 <strong>Tip:</strong> Puedes pegar la URL completa de Steam o solo el Steam ID64
-                </div>
                 <button 
                   className="add-troll-btn"
                   onClick={addTroll}
