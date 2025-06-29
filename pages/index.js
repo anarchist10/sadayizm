@@ -3,13 +3,13 @@ import Starfield from '../components/Starfield';
 import { useEffect, useState, useRef } from 'react';
 
 const nicks = [
-  { name: 'anar', url: 'https://steamcommunity.com/id/anrz/', faceitApi: 'https://api.jakobkristensen.com/76561198860541170/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/ANARCHlST', steamId: '76561198860541170' },
+  { name: 'anar', url: 'https://steamcommunity.com/id/anrz/', faceitApi: 'https://api.jakobkristensen.com/76561198860541170/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/ANARCHlST' },
   { name: 'nikito', url: 'https://steamcommunity.com/id/nkto/', faceitApi: 'https://api.jakobkristensen.com/76561198402344265/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/nikito' },
   { name: 'nyoh', url: 'https://steamcommunity.com/id/srz1/', faceitApi: 'https://api.jakobkristensen.com/76561198374148982/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/kyrgios' },
   { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198999108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
   { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
@@ -18,8 +18,6 @@ const nicks = [
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
-  const [showAnarCard, setShowAnarCard] = useState(false);
-  const [anarAvatar, setAnarAvatar] = useState('');
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -36,28 +34,6 @@ export default function Home() {
           .catch(() => setElos(prev => ({ ...prev, [nick.name]: 'N/A' })));
       }
     });
-
-    // Obtener avatar de Steam para anar
-    const anarNick = nicks.find(nick => nick.name === 'anar');
-    if (anarNick && anarNick.steamId) {
-      // Usar un proxy CORS o una API alternativa para obtener el avatar
-      // Como alternativa, podemos usar la URL directa del perfil de Steam
-      fetch(`https://steamcommunity.com/profiles/${anarNick.steamId}?xml=1`)
-        .then(res => res.text())
-        .then(xmlText => {
-          // Parsear el XML para obtener la URL del avatar
-          const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-          const avatarFull = xmlDoc.querySelector('avatarFull');
-          if (avatarFull) {
-            setAnarAvatar(avatarFull.textContent);
-          }
-        })
-        .catch(() => {
-          // Fallback: usar una URL construida manualmente
-          setAnarAvatar(`https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/${anarNick.steamId.slice(-2)}/${anarNick.steamId}_full.jpg`);
-        });
-    }
   }, []);
 
   useEffect(() => {
@@ -67,17 +43,27 @@ export default function Home() {
         let parsedElo = 0;
         
         if (typeof eloValue === 'number') {
+          // La API devuelve el elo en formato de miles (ej: 2.83 = 2830)
+          // Solo multiplicar si el valor es mayor a 0
           parsedElo = eloValue > 0 ? Math.round(eloValue * 1000) : 0;
+          
+          // Si el elo original termina en .0, .10, .20, etc., la API no incluye el 0 final
+          // Verificamos si el valor original termina en un múltiplo de 0.01
           const originalValue = eloValue * 1000;
           if (originalValue % 10 === 0 && parsedElo % 10 !== 0) {
+            // Si debería terminar en 0 pero no termina, agregamos el 0
             parsedElo = parsedElo * 10;
           }
         } else if (typeof eloValue === 'string') {
+          // Remover cualquier caracter no numérico excepto puntos
           const cleanValue = eloValue.replace(/[^\d.]/g, '');
           const floatValue = parseFloat(cleanValue) || 0;
           parsedElo = floatValue > 0 ? Math.round(floatValue * 1000) : 0;
+          
+          // Si el elo original termina en .0, .10, .20, etc., la API no incluye el 0 final
           const originalValue = floatValue * 1000;
           if (originalValue % 10 === 0 && parsedElo % 10 !== 0) {
+            // Si debería terminar en 0 pero no termina, agregamos el 0
             parsedElo = parsedElo * 10;
           }
         }
@@ -120,7 +106,7 @@ export default function Home() {
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
-            <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
+            <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
               {idx === 0 && (
                 <img src="/corona.png" alt="corona" style={{ width: '100px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
               )}
@@ -136,8 +122,6 @@ export default function Home() {
                     color: idx === 0 ? '#FFD700' : (nick.name === 'angry' ? '#ff0000' : 'inherit'),
                     position: nick.name === 'angry' ? 'relative' : 'static'
                   }}
-                  onMouseEnter={() => nick.name === 'anar' && setShowAnarCard(true)}
-                  onMouseLeave={() => nick.name === 'anar' && setShowAnarCard(false)}
                 >
                   {nick.name}
                   {nick.name === 'angry' && (
@@ -168,31 +152,6 @@ export default function Home() {
                   </>
                 )}
               </div>
-              
-              {/* Tarjeta hover para anar */}
-              {nick.name === 'anar' && showAnarCard && (
-                <div className="anar-hover-card">
-                  <img 
-                    src={anarAvatar || `https://avatars.steamstatic.com/${nick.steamId.slice(-2)}/${nick.steamId}_full.jpg`}
-                    alt="anar avatar"
-                    style={{ width: '100px', height: '100px', borderRadius: '8px' }}
-                    onError={(e) => {
-                      // Múltiples fallbacks
-                      if (e.target.src.includes('steamstatic')) {
-                        e.target.src = `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/${nick.steamId.slice(-2)}/${nick.steamId}_full.jpg`;
-                      } else if (e.target.src.includes('steamcdn-a')) {
-                        e.target.src = `https://steamuserimages-a.akamaihd.net/ugc/${nick.steamId}/${nick.steamId}_full.jpg`;
-                      } else {
-                        // Último fallback: avatar por defecto de Steam
-                        e.target.src = 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg';
-                      }
-                    }}
-                  />
-                  <div style={{ marginTop: '8px', fontSize: '0.9rem', color: '#ccc' }}>
-                    Steam Profile
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
