@@ -65,3 +65,32 @@ body {
 .fade-elo-diff.visible {
   opacity: 1;
 }
+
+.video-tooltip {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #ffd700;
+  border-radius: 8px;
+  padding: 8px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+  animation: fadeInVideo 0.3s ease-in-out;
+}
+
+.video-tooltip iframe {
+  border-radius: 4px;
+}
+
+@keyframes fadeInVideo {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

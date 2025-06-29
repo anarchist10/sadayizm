@@ -10,7 +10,7 @@ const nicks = [
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
   { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
-  { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM' },
+  { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
 ];
@@ -18,6 +18,7 @@ const nicks = [
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
+  const [hoveredNick, setHoveredNick] = useState(null);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -106,7 +107,7 @@ export default function Home() {
         <div className="gothic-title">sadayizm</div>
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
-            <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
+            <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
               {idx === 0 && (
                 <img src="/corona.png" alt="corona" style={{ width: '100px', marginBottom: '-0.5rem', display: 'block', alignSelf: 'center' }} />
               )}
@@ -122,6 +123,8 @@ export default function Home() {
                     color: idx === 0 ? '#FFD700' : (nick.name === 'angry' ? '#ff0000' : 'inherit'),
                     position: nick.name === 'angry' ? 'relative' : 'static'
                   }}
+                  onMouseEnter={() => nick.videoId && setHoveredNick(nick.name)}
+                  onMouseLeave={() => nick.videoId && setHoveredNick(null)}
                 >
                   {nick.name}
                   {nick.name === 'angry' && (
@@ -152,6 +155,21 @@ export default function Home() {
                   </>
                 )}
               </div>
+              
+              {/* Video tooltip for ElComba */}
+              {nick.videoId && hoveredNick === nick.name && (
+                <div className="video-tooltip">
+                  <iframe
+                    width="320"
+                    height="180"
+                    src={`https://www.youtube.com/embed/${nick.videoId}?autoplay=1&mute=1&loop=1&playlist=${nick.videoId}`}
+                    title="ElComba clip"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
