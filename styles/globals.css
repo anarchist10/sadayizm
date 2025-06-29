@@ -306,6 +306,16 @@ body {
   color: #888;
 }
 
+.steam-id-help {
+  color: #88ccff;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  background: rgba(136, 204, 255, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #88ccff;
+  font-family: 'SadayizmFont', monospace;
+}
+
 .add-troll-btn {
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #ff4444 0%, #cc3333 100%);
@@ -424,7 +434,25 @@ body {
   align-items: center;
 }
 
-.faceit-btn {
+.steam-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: rgba(27, 40, 56, 0.3);
+  border: 1px solid #1b2838;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.steam-btn:hover {
+  background: rgba(27, 40, 56, 0.5);
+  border-color: #66c0f4;
+  transform: scale(1.1);
+}
+
+.faceit-finder-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -436,7 +464,7 @@ body {
   transition: all 0.2s;
 }
 
-.faceit-btn:hover {
+.faceit-finder-btn:hover {
   background: rgba(255, 85, 0, 0.3);
   transform: scale(1.1);
 }
