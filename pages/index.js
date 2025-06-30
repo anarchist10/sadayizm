@@ -155,15 +155,55 @@ function isValidSteamId(steamId) {
   return false;
 }
 
-// Función para obtener información de Faceit desde la API
+// Función mejorada para obtener información de Faceit con múltiples métodos
 async function fetchFaceitInfo(steamId) {
+  console.log(`🔍 Buscando información de Faceit para Steam ID: ${steamId}`);
+  
+  // Método 1: FaceitFinder API
   try {
-    console.log(`Fetching Faceit info for Steam ID: ${steamId}`);
-    
+    console.log('📡 Intentando con FaceitFinder API...');
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     
     const response = await fetch(`https://faceitfinder.com/api/lookup?id=${steamId}`, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ FaceitFinder response:', data);
+      
+      if (data && (data.nickname || data.faceit_nickname || data.username)) {
+        const nickname = data.nickname || data.faceit_nickname || data.username;
+        return {
+          nickname: nickname,
+          faceitUrl: `https://faceit.com/en/players/${nickname}`,
+          method: 'FaceitFinder API'
+        };
+      }
+    }
+  } catch (error) {
+    console.log('❌ FaceitFinder API falló:', error.message);
+  }
+  
+  // Método 2: Intentar con una API alternativa (simulada)
+  try {
+    console.log('📡 Intentando con método alternativo...');
+    
+    // Simulamos una búsqueda alternativa - en un caso real podrías usar otra API
+    // Por ahora, intentaremos extraer información de patrones conocidos
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    // Intentar con una API proxy o alternativa
+    const proxyResponse = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://faceitfinder.com/api/lookup?id=${steamId}`)}`, {
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
@@ -172,27 +212,49 @@ async function fetchFaceitInfo(steamId) {
     
     clearTimeout(timeoutId);
     
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (proxyResponse.ok) {
+      const proxyData = await proxyResponse.json();
+      if (proxyData.contents) {
+        const data = JSON.parse(proxyData.contents);
+        console.log('✅ Proxy response:', data);
+        
+        if (data && (data.nickname || data.faceit_nickname || data.username)) {
+          const nickname = data.nickname || data.faceit_nickname || data.username;
+          return {
+            nickname: nickname,
+            faceitUrl: `https://faceit.com/en/players/${nickname}`,
+            method: 'Proxy API'
+          };
+        }
+      }
     }
-    
-    const data = await response.json();
-    console.log(`Faceit API response for ${steamId}:`, data);
-    
-    // La API puede devolver diferentes estructuras, adaptamos según lo que recibamos
-    if (data && data.nickname) {
+  } catch (error) {
+    console.log('❌ Método alternativo falló:', error.message);
+  }
+  
+  // Método 3: Buscar en base a patrones conocidos o sugerencias
+  console.log('🤔 Intentando con patrones conocidos...');
+  
+  // Si el Steam ID coincide con alguno de nuestros usuarios conocidos
+  const knownUser = nicks.find(nick => {
+    const knownSteamId = extractSteamId(nick.url);
+    return knownSteamId === steamId;
+  });
+  
+  if (knownUser && knownUser.faceitUrl) {
+    const faceitNickMatch = knownUser.faceitUrl.match(/players\/([^\/\?]+)/);
+    if (faceitNickMatch) {
+      console.log('✅ Encontrado en usuarios conocidos:', faceitNickMatch[1]);
       return {
-        nickname: data.nickname,
-        faceitUrl: `https://faceit.com/en/players/${data.nickname}`
+        nickname: faceitNickMatch[1],
+        faceitUrl: knownUser.faceitUrl,
+        method: 'Usuarios conocidos'
       };
     }
-    
-    return null;
-    
-  } catch (error) {
-    console.error(`Error fetching Faceit info for ${steamId}:`, error.message);
-    return null;
   }
+  
+  console.log('❌ No se pudo obtener información de Faceit');
+  return null;
 }
 
 export default function Home() {
@@ -209,6 +271,7 @@ export default function Home() {
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
   const [resolvingFaceit, setResolvingFaceit] = useState(false);
+  const [faceitStatus, setFaceitStatus] = useState('');
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -265,17 +328,27 @@ export default function Home() {
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
       setResolvingFaceit(true);
+      setFaceitStatus('🔍 Validando Steam ID...');
       
       const extractedSteamId = extractSteamId(newTroll.steamId.trim());
       
       if (!isValidSteamId(extractedSteamId)) {
         alert('Steam ID no válido. Debe ser un Steam ID64 (17 dígitos) o un nombre de usuario válido.');
         setResolvingFaceit(false);
+        setFaceitStatus('');
         return;
       }
       
+      setFaceitStatus('🔍 Buscando información de Faceit...');
+      
       // Obtener información de Faceit
       const faceitInfo = await fetchFaceitInfo(extractedSteamId);
+      
+      if (faceitInfo) {
+        setFaceitStatus(`✅ Encontrado: ${faceitInfo.nickname} (${faceitInfo.method})`);
+      } else {
+        setFaceitStatus('⚠️ No se encontró información de Faceit');
+      }
       
       const troll = {
         nick: newTroll.nick.trim(),
@@ -300,13 +373,19 @@ export default function Home() {
           const newTrollData = await response.json();
           setTrollList(prev => [...prev, newTrollData]);
           setNewTroll({ nick: '', steamId: '', reason: '' });
+          setFaceitStatus('✅ Troll agregado exitosamente');
+          
+          // Limpiar el status después de 3 segundos
+          setTimeout(() => setFaceitStatus(''), 3000);
         } else {
           console.error('Error adding troll:', response.statusText);
           alert('Error al agregar el troll. Inténtalo de nuevo.');
+          setFaceitStatus('❌ Error al agregar');
         }
       } catch (error) {
         console.error('Error adding troll:', error);
         alert('Error de conexión. Inténtalo de nuevo.');
+        setFaceitStatus('❌ Error de conexión');
       }
       
       setResolvingFaceit(false);
@@ -494,14 +573,22 @@ export default function Home() {
                 />
                 <div className="steam-id-help">
                   💡 <strong>Tip:</strong> Puedes pegar la URL completa de Steam o solo el Steam ID64. 
-                  Se resolverá automáticamente el nickname de Faceit.
+                  Se intentará resolver automáticamente el nickname de Faceit usando múltiples métodos.
                 </div>
+                
+                {/* Status de resolución de Faceit */}
+                {faceitStatus && (
+                  <div className="faceit-status">
+                    {faceitStatus}
+                  </div>
+                )}
+                
                 <button 
                   className="add-troll-btn"
                   onClick={addTroll}
                   disabled={!newTroll.nick.trim() || !newTroll.steamId.trim() || resolvingFaceit}
                 >
-                  {resolvingFaceit ? '🔍 Resolviendo Faceit...' : 'Agregar Troll'}
+                  {resolvingFaceit ? '🔍 Procesando...' : 'Agregar Troll'}
                 </button>
               </div>
             </div>
@@ -544,7 +631,7 @@ export default function Home() {
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.52 0 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="#1b2838"/>
                           </svg>
                         </a>
-                        {troll.faceitUrl && troll.faceitUrl !== '#' && (
+                        {troll.faceitUrl && troll.faceitUrl !== '#' && troll.faceitNickname !== 'No encontrado' && (
                           <a
                             href={troll.faceitUrl}
                             target="_blank"
