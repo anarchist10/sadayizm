@@ -8,7 +8,7 @@ export default function handler(req, res) {
     res.status(200).json(trollList);
   } else if (req.method === 'POST') {
     // Agregar nuevo troll
-    const { nick, steamId, reason, steamUrl, faceitFinderUrl } = req.body;
+    const { nick, steamId, reason, steamUrl, faceitFinderUrl, faceitNickname, faceitUrl } = req.body;
     
     if (!nick || !steamId) {
       return res.status(400).json({ error: 'Nick y Steam ID son requeridos' });
@@ -21,6 +21,8 @@ export default function handler(req, res) {
       reason: reason || 'Sin razón especificada',
       steamUrl: steamUrl || `https://steamcommunity.com/profiles/${steamId}`,
       faceitFinderUrl: faceitFinderUrl || `https://faceitfinder.com/profile/${steamId}`,
+      faceitNickname: faceitNickname || 'No encontrado',
+      faceitUrl: faceitUrl || '#',
       dateAdded: new Date().toISOString()
     };
     

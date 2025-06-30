@@ -155,6 +155,46 @@ function isValidSteamId(steamId) {
   return false;
 }
 
+// Función para obtener información de Faceit desde la API
+async function fetchFaceitInfo(steamId) {
+  try {
+    console.log(`Fetching Faceit info for Steam ID: ${steamId}`);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch(`https://faceitfinder.com/api/lookup?id=${steamId}`, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Faceit API response for ${steamId}:`, data);
+    
+    // La API puede devolver diferentes estructuras, adaptamos según lo que recibamos
+    if (data && data.nickname) {
+      return {
+        nickname: data.nickname,
+        faceitUrl: `https://faceit.com/en/players/${data.nickname}`
+      };
+    }
+    
+    return null;
+    
+  } catch (error) {
+    console.error(`Error fetching Faceit info for ${steamId}:`, error.message);
+    return null;
+  }
+}
+
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
@@ -168,6 +208,7 @@ export default function Home() {
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
+  const [resolvingFaceit, setResolvingFaceit] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -223,19 +264,27 @@ export default function Home() {
   // Agregar troll a la base de datos
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
+      setResolvingFaceit(true);
+      
       const extractedSteamId = extractSteamId(newTroll.steamId.trim());
       
       if (!isValidSteamId(extractedSteamId)) {
         alert('Steam ID no válido. Debe ser un Steam ID64 (17 dígitos) o un nombre de usuario válido.');
+        setResolvingFaceit(false);
         return;
       }
+      
+      // Obtener información de Faceit
+      const faceitInfo = await fetchFaceitInfo(extractedSteamId);
       
       const troll = {
         nick: newTroll.nick.trim(),
         steamId: extractedSteamId,
         reason: newTroll.reason.trim() || 'Sin razón especificada',
         steamUrl: generateSteamUrl(extractedSteamId),
-        faceitFinderUrl: generateFaceitFinderUrl(extractedSteamId)
+        faceitFinderUrl: generateFaceitFinderUrl(extractedSteamId),
+        faceitNickname: faceitInfo?.nickname || 'No encontrado',
+        faceitUrl: faceitInfo?.faceitUrl || '#'
       };
       
       try {
@@ -259,6 +308,8 @@ export default function Home() {
         console.error('Error adding troll:', error);
         alert('Error de conexión. Inténtalo de nuevo.');
       }
+      
+      setResolvingFaceit(false);
     }
   };
 
@@ -442,14 +493,15 @@ export default function Home() {
                   className="troll-input"
                 />
                 <div className="steam-id-help">
-                  💡 <strong>Tip:</strong> Puedes pegar la URL completa de Steam o solo el Steam ID64
+                  💡 <strong>Tip:</strong> Puedes pegar la URL completa de Steam o solo el Steam ID64. 
+                  Se resolverá automáticamente el nickname de Faceit.
                 </div>
                 <button 
                   className="add-troll-btn"
                   onClick={addTroll}
-                  disabled={!newTroll.nick.trim() || !newTroll.steamId.trim()}
+                  disabled={!newTroll.nick.trim() || !newTroll.steamId.trim() || resolvingFaceit}
                 >
-                  Agregar Troll
+                  {resolvingFaceit ? '🔍 Resolviendo Faceit...' : 'Agregar Troll'}
                 </button>
               </div>
             </div>
@@ -468,8 +520,15 @@ export default function Home() {
                       <div className="troll-info">
                         <div className="troll-nick">{troll.nick}</div>
                         <div className="troll-details">
-                          <span className="troll-steamid">Steam: {troll.steamId}</span>
-                          <span className="troll-date">Agregado: {new Date(troll.dateAdded).toLocaleDateString('es-AR')}</span>
+                          <div className="troll-steamid">
+                            <strong>Steam ID:</strong> {troll.steamId}
+                          </div>
+                          <div className="troll-faceit-nick">
+                            <strong>Faceit:</strong> {troll.faceitNickname || 'No encontrado'}
+                          </div>
+                          <div className="troll-date">
+                            <strong>Agregado:</strong> {new Date(troll.dateAdded).toLocaleDateString('es-AR')}
+                          </div>
                         </div>
                         <div className="troll-reason">"{troll.reason}"</div>
                       </div>
@@ -485,6 +544,19 @@ export default function Home() {
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.52 0 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="#1b2838"/>
                           </svg>
                         </a>
+                        {troll.faceitUrl && troll.faceitUrl !== '#' && (
+                          <a
+                            href={troll.faceitUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="faceit-btn"
+                            title="Ver perfil en Faceit"
+                          >
+                            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
+                            </svg>
+                          </a>
+                        )}
                         <a
                           href={troll.faceitFinderUrl}
                           target="_blank"
@@ -492,8 +564,8 @@ export default function Home() {
                           className="faceit-finder-btn"
                           title="Buscar en FaceitFinder"
                         >
-                          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#88ccff"/>
                           </svg>
                         </a>
                         <button 
