@@ -112,6 +112,26 @@ function extractSteamId(input) {
   return cleanInput.replace(/[^\w\d]/g, '');
 }
 
+// Función para convertir Steam ID personalizado a Steam ID64 usando Steam Web API
+async function convertCustomIdToSteamId64(customId) {
+  try {
+    // Intentar obtener el Steam ID64 desde el perfil público
+    const response = await fetch(`https://steamcommunity.com/id/${customId}/?xml=1`);
+    const text = await response.text();
+    
+    // Buscar el Steam ID64 en el XML
+    const steamId64Match = text.match(/<steamID64>(\d+)<\/steamID64>/);
+    if (steamId64Match) {
+      return steamId64Match[1];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error converting custom ID to Steam ID64:', error);
+    return null;
+  }
+}
+
 // Función para generar URL de Steam
 function generateSteamUrl(steamId) {
   if (!steamId) return '#';
@@ -168,6 +188,8 @@ export default function Home() {
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
+  const [resolvingSteamId, setResolvingSteamId] = useState(false);
+  const [resolvedSteamId64, setResolvedSteamId64] = useState('');
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -187,6 +209,36 @@ export default function Home() {
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
   }, [keySequence]);
+
+  // Resolver Steam ID64 cuando se ingresa una URL o custom ID
+  useEffect(() => {
+    const resolveSteamId = async () => {
+      if (newTroll.steamId.trim()) {
+        setResolvingSteamId(true);
+        const extractedId = extractSteamId(newTroll.steamId.trim());
+        
+        // Si es un custom ID (no Steam ID64), intentar convertirlo
+        if (extractedId && !/^\d{17}$/.test(extractedId)) {
+          const steamId64 = await convertCustomIdToSteamId64(extractedId);
+          if (steamId64) {
+            setResolvedSteamId64(steamId64);
+          } else {
+            setResolvedSteamId64('');
+          }
+        } else if (/^\d{17}$/.test(extractedId)) {
+          setResolvedSteamId64(extractedId);
+        } else {
+          setResolvedSteamId64('');
+        }
+        setResolvingSteamId(false);
+      } else {
+        setResolvedSteamId64('');
+      }
+    };
+
+    const timeoutId = setTimeout(resolveSteamId, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [newTroll.steamId]);
 
   // Manejar verificación de contraseña
   const handlePasswordSubmit = (e) => {
@@ -230,12 +282,16 @@ export default function Home() {
         return;
       }
       
+      // Usar el Steam ID64 resuelto si está disponible, sino usar el extraído
+      const finalSteamId = resolvedSteamId64 || extractedSteamId;
+      
       const troll = {
         nick: newTroll.nick.trim(),
-        steamId: extractedSteamId,
+        steamId: finalSteamId,
+        steamId64: resolvedSteamId64, // Guardar el Steam ID64 por separado
         reason: newTroll.reason.trim() || 'Sin razón especificada',
-        steamUrl: generateSteamUrl(extractedSteamId),
-        faceitFinderUrl: generateFaceitFinderUrl(extractedSteamId)
+        steamUrl: generateSteamUrl(finalSteamId),
+        faceitFinderUrl: generateFaceitFinderUrl(resolvedSteamId64 || finalSteamId)
       };
       
       try {
@@ -251,6 +307,7 @@ export default function Home() {
           const newTrollData = await response.json();
           setTrollList(prev => [...prev, newTrollData]);
           setNewTroll({ nick: '', steamId: '', reason: '' });
+          setResolvedSteamId64('');
         } else {
           console.error('Error adding troll:', response.statusText);
           alert('Error al agregar el troll. Inténtalo de nuevo.');
@@ -434,6 +491,26 @@ export default function Home() {
                   onChange={(e) => setNewTroll({...newTroll, steamId: e.target.value})}
                   className="troll-input"
                 />
+                
+                {/* Mostrar Steam ID64 resuelto */}
+                {newTroll.steamId.trim() && (
+                  <div className="steam-id-resolved">
+                    {resolvingSteamId ? (
+                      <div className="resolving-steam-id">
+                        🔄 Resolviendo Steam ID...
+                      </div>
+                    ) : resolvedSteamId64 ? (
+                      <div className="resolved-steam-id">
+                        ✅ <strong>Steam ID64:</strong> {resolvedSteamId64}
+                      </div>
+                    ) : (
+                      <div className="steam-id-warning">
+                        ⚠️ No se pudo resolver el Steam ID64
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <input
                   type="text"
                   placeholder="Razón (opcional)"
@@ -447,9 +524,9 @@ export default function Home() {
                 <button 
                   className="add-troll-btn"
                   onClick={addTroll}
-                  disabled={!newTroll.nick.trim() || !newTroll.steamId.trim()}
+                  disabled={!newTroll.nick.trim() || !newTroll.steamId.trim() || resolvingSteamId}
                 >
-                  Agregar Troll
+                  {resolvingSteamId ? 'Resolviendo...' : 'Agregar Troll'}
                 </button>
               </div>
             </div>
@@ -469,6 +546,9 @@ export default function Home() {
                         <div className="troll-nick">{troll.nick}</div>
                         <div className="troll-details">
                           <span className="troll-steamid">Steam: {troll.steamId}</span>
+                          {troll.steamId64 && troll.steamId64 !== troll.steamId && (
+                            <span className="troll-steamid64">ID64: {troll.steamId64}</span>
+                          )}
                           <span className="troll-date">Agregado: {new Date(troll.dateAdded).toLocaleDateString('es-AR')}</span>
                         </div>
                         <div className="troll-reason">"{troll.reason}"</div>
