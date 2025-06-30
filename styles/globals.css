@@ -620,6 +620,22 @@ body {
   font-family: monospace;
 }
 
+.troll-faceit-url {
+  color: #ff5500;
+}
+
+.faceit-link {
+  color: #ff5500;
+  text-decoration: none;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.faceit-link:hover {
+  color: #ff7700;
+  text-decoration: underline;
+}
+
 .troll-date {
   color: #aaa;
 }
@@ -671,6 +687,23 @@ body {
 
 .faceit-finder-btn:hover {
   background: rgba(136, 204, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.faceit-profile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: rgba(255, 85, 0, 0.2);
+  border: 1px solid #ff5500;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.faceit-profile-btn:hover {
+  background: rgba(255, 85, 0, 0.3);
   transform: scale(1.1);
 }
 

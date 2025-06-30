@@ -23,7 +23,7 @@ export default function handler(req, res) {
       steamUrl: steamUrl || `https://steamcommunity.com/profiles/${steamId}`,
       faceitFinderUrl: faceitFinderUrl || `https://faceitfinder.com/profile/${steamId}`,
       faceitNickname: faceitNickname || 'No encontrado',
-      faceitUrl: faceitUrl || '#',
+      faceitUrl: faceitUrl || '',
       dateAdded: new Date().toISOString()
     };
     

@@ -90,7 +90,7 @@ export default function Home() {
   const [passwordError, setPasswordError] = useState('');
   const [trollList, setTrollList] = useState([]);
   const [keySequence, setKeySequence] = useState('');
-  const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', steamId64: '', reason: '' });
+  const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
   const [activeTab, setActiveTab] = useState(null); // Cambio: null por defecto para ocultar
   const [showTools, setShowTools] = useState(false); // Nuevo estado para mostrar/ocultar herramientas
@@ -153,7 +153,8 @@ export default function Home() {
         nick: newTroll.nick.trim(),
         steamId: newTroll.steamId.trim(),
         steamId64: newTroll.steamId64.trim() || 'No especificado',
-        reason: newTroll.reason.trim() || 'Sin razón especificada'
+        reason: newTroll.reason.trim() || 'Sin razón especificada',
+        faceitUrl: newTroll.faceitUrl.trim() || ''
       };
       
       try {
@@ -168,7 +169,7 @@ export default function Home() {
         if (response.ok) {
           const newTrollData = await response.json();
           setTrollList(prev => [...prev, newTrollData]);
-          setNewTroll({ nick: '', steamId: '', steamId64: '', reason: '' });
+          setNewTroll({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
         } else {
           console.error('Error adding troll:', response.statusText);
           alert('Error al agregar el troll. Inténtalo de nuevo.');
@@ -374,6 +375,13 @@ export default function Home() {
                     />
                     <input
                       type="text"
+                      placeholder="URL de Faceit (opcional - búscalo en las herramientas →)"
+                      value={newTroll.faceitUrl}
+                      onChange={(e) => setNewTroll({...newTroll, faceitUrl: e.target.value})}
+                      className="troll-input"
+                    />
+                    <input
+                      type="text"
                       placeholder="Razón (opcional)"
                       value={newTroll.reason}
                       onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
@@ -411,6 +419,11 @@ export default function Home() {
                                   <strong>Steam ID64:</strong> {troll.steamId64}
                                 </div>
                               )}
+                              {troll.faceitUrl && troll.faceitUrl !== '' && (
+                                <div className="troll-faceit-url">
+                                  <strong>Faceit:</strong> <a href={troll.faceitUrl} target="_blank" rel="noopener noreferrer" className="faceit-link">{troll.faceitUrl}</a>
+                                </div>
+                              )}
                               <div className="troll-date">
                                 <strong>Agregado:</strong> {new Date(troll.dateAdded).toLocaleDateString('es-AR')}
                               </div>
@@ -440,6 +453,19 @@ export default function Home() {
                                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#88ccff"/>
                               </svg>
                             </a>
+                            {troll.faceitUrl && troll.faceitUrl !== '' && (
+                              <a
+                                href={troll.faceitUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="faceit-profile-btn"
+                                title="Ver perfil en Faceit"
+                              >
+                                <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
+                                </svg>
+                              </a>
+                            )}
                             <button 
                               className="remove-troll-btn"
                               onClick={() => removeTroll(troll.id)}
