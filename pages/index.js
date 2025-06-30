@@ -92,7 +92,8 @@ export default function Home() {
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
-  const [activeTab, setActiveTab] = useState('faceitfinder'); // Nueva state para las pestañas
+  const [activeTab, setActiveTab] = useState(null); // Cambio: null por defecto para ocultar
+  const [showTools, setShowTools] = useState(false); // Nuevo estado para mostrar/ocultar herramientas
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -195,6 +196,12 @@ export default function Home() {
       console.error('Error removing troll:', error);
       alert('Error de conexión. Inténtalo de nuevo.');
     }
+  };
+
+  // Función para mostrar herramientas y seleccionar pestaña
+  const showToolsWithTab = (tabName) => {
+    setShowTools(true);
+    setActiveTab(tabName);
   };
 
   useEffect(() => {
@@ -326,7 +333,11 @@ export default function Home() {
               <h2>🚨 Lista de Trolls/Tóxicos</h2>
               <button 
                 className="close-btn"
-                onClick={() => setShowTrollList(false)}
+                onClick={() => {
+                  setShowTrollList(false);
+                  setShowTools(false);
+                  setActiveTab(null);
+                }}
               >
                 ✕
               </button>
@@ -405,55 +416,84 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Panel derecho - Herramientas con pestañas */}
+              {/* Panel derecho - Herramientas */}
               <div className="tools-panel">
                 <div className="tools-header">
                   <h3>🔧 Herramientas de Búsqueda</h3>
                   <p>Busca información de Steam y Faceit manualmente</p>
                 </div>
                 
-                {/* Pestañas */}
-                <div className="tabs-container">
-                  <button 
-                    className={`tab-button ${activeTab === 'faceitfinder' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('faceitfinder')}
-                  >
-                    🎯 FaceitFinder
-                  </button>
-                  <button 
-                    className={`tab-button ${activeTab === 'steamid' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('steamid')}
-                  >
-                    🔍 SteamID.io
-                  </button>
-                </div>
+                {/* Botones para mostrar herramientas */}
+                {!showTools ? (
+                  <div className="tools-buttons">
+                    <button 
+                      className="tool-launch-btn faceit-btn"
+                      onClick={() => showToolsWithTab('faceitfinder')}
+                    >
+                      🎯 Abrir FaceitFinder
+                    </button>
+                    <button 
+                      className="tool-launch-btn steamid-btn"
+                      onClick={() => showToolsWithTab('steamid')}
+                    >
+                      🔍 Abrir SteamID.io
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Pestañas */}
+                    <div className="tabs-container">
+                      <button 
+                        className={`tab-button ${activeTab === 'faceitfinder' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('faceitfinder')}
+                      >
+                        🎯 FaceitFinder
+                      </button>
+                      <button 
+                        className={`tab-button ${activeTab === 'steamid' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('steamid')}
+                      >
+                        🔍 SteamID.io
+                      </button>
+                      <button 
+                        className="tab-button close-tools"
+                        onClick={() => {
+                          setShowTools(false);
+                          setActiveTab(null);
+                        }}
+                      >
+                        ✕ Cerrar
+                      </button>
+                    </div>
 
-                {/* Contenido de las pestañas */}
-                <div className="tab-content">
-                  {activeTab === 'faceitfinder' && (
-                    <div className="tool-container">
-                      <iframe
-                        src="https://faceitfinder.com/"
-                        title="FaceitFinder"
-                        className="tool-iframe"
-                        frameBorder="0"
-                        allowFullScreen
-                      />
+                    {/* Contenido de las pestañas */}
+                    <div className="tab-content">
+                      {activeTab === 'faceitfinder' && (
+                        <div className="tool-container">
+                          <iframe
+                            src="https://faceitfinder.com/"
+                            title="FaceitFinder"
+                            className="tool-iframe"
+                            frameBorder="0"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      
+                      {activeTab === 'steamid' && (
+                        <div className="tool-container">
+                          <iframe
+                            src="https://steamid.io/"
+                            title="SteamID.io"
+                            className="tool-iframe"
+                            frameBorder="0"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  {activeTab === 'steamid' && (
-                    <div className="tool-container">
-                      <iframe
-                        src="https://steamid.io/"
-                        title="SteamID.io"
-                        className="tool-iframe"
-                        frameBorder="0"
-                        allowFullScreen
-                      />
-                    </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

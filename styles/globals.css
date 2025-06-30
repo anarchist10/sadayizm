@@ -309,6 +309,55 @@ body {
   font-size: 0.9rem;
 }
 
+/* Botones para lanzar herramientas */
+.tools-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  background: rgba(136, 204, 255, 0.05);
+  border: 2px dashed #88ccff;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.tool-launch-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tool-launch-btn.faceit-btn {
+  background: linear-gradient(135deg, #ff5500 0%, #cc4400 100%);
+  color: #fff;
+}
+
+.tool-launch-btn.faceit-btn:hover {
+  background: linear-gradient(135deg, #ff6600 0%, #dd5500 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 85, 0, 0.3);
+}
+
+.tool-launch-btn.steamid-btn {
+  background: linear-gradient(135deg, #88ccff 0%, #66aadd 100%);
+  color: #000;
+}
+
+.tool-launch-btn.steamid-btn:hover {
+  background: linear-gradient(135deg, #99ddff 0%, #77bbee 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(136, 204, 255, 0.3);
+}
+
 /* Pestañas */
 .tabs-container {
   display: flex;
@@ -344,6 +393,18 @@ body {
   color: #88ccff;
 }
 
+.tab-button.close-tools {
+  margin-left: auto;
+  color: #ff6b6b;
+  border-radius: 6px;
+  border-bottom: none;
+}
+
+.tab-button.close-tools:hover {
+  color: #fff;
+  background: rgba(255, 107, 107, 0.2);
+}
+
 /* Contenido de las pestañas */
 .tab-content {
   flex: 1;
@@ -359,6 +420,18 @@ body {
   overflow: hidden;
   background: #fff;
   position: relative;
+  animation: slideInTool 0.3s ease-out;
+}
+
+@keyframes slideInTool {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tool-iframe {
@@ -601,6 +674,17 @@ body {
   .troll-left-panel {
     max-height: 50vh;
   }
+  
+  .tools-buttons {
+    height: 200px;
+    padding: 1rem;
+  }
+  
+  .tool-launch-btn {
+    min-width: 150px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -636,6 +720,7 @@ body {
   
   .tools-panel {
     min-height: 300px;
+    min-width: auto;
   }
   
   .tabs-container {
@@ -644,6 +729,19 @@ body {
   
   .tab-button {
     flex: 1;
+    min-width: 100px;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .tools-buttons {
+    height: 150px;
+    gap: 0.75rem;
+  }
+  
+  .tool-launch-btn {
     min-width: 120px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
   }
 }
