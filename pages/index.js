@@ -90,7 +90,7 @@ export default function Home() {
   const [passwordError, setPasswordError] = useState('');
   const [trollList, setTrollList] = useState([]);
   const [keySequence, setKeySequence] = useState('');
-  const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
+  const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', steamId64: '', reason: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
   const [activeTab, setActiveTab] = useState(null); // Cambio: null por defecto para ocultar
   const [showTools, setShowTools] = useState(false); // Nuevo estado para mostrar/ocultar herramientas
@@ -152,6 +152,7 @@ export default function Home() {
       const troll = {
         nick: newTroll.nick.trim(),
         steamId: newTroll.steamId.trim(),
+        steamId64: newTroll.steamId64.trim() || 'No especificado',
         reason: newTroll.reason.trim() || 'Sin razón especificada'
       };
       
@@ -167,7 +168,7 @@ export default function Home() {
         if (response.ok) {
           const newTrollData = await response.json();
           setTrollList(prev => [...prev, newTrollData]);
-          setNewTroll({ nick: '', steamId: '', reason: '' });
+          setNewTroll({ nick: '', steamId: '', steamId64: '', reason: '' });
         } else {
           console.error('Error adding troll:', response.statusText);
           alert('Error al agregar el troll. Inténtalo de nuevo.');
@@ -366,11 +367,22 @@ export default function Home() {
                     />
                     <input
                       type="text"
+                      placeholder="Steam ID64 (opcional - búscalo en las herramientas →)"
+                      value={newTroll.steamId64}
+                      onChange={(e) => setNewTroll({...newTroll, steamId64: e.target.value})}
+                      className="troll-input steamid64-input"
+                    />
+                    <input
+                      type="text"
                       placeholder="Razón (opcional)"
                       value={newTroll.reason}
                       onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
                       className="troll-input"
                     />
+                    <div className="steamid64-help">
+                      💡 <strong>Tip:</strong> Usa las herramientas de la derecha para buscar el Steam ID64 exacto. 
+                      Copia el Steam ID64 de 17 dígitos y pégalo en el campo de arriba para mayor precisión.
+                    </div>
                     <button 
                       className="add-troll-btn"
                       onClick={addTroll}
@@ -394,13 +406,44 @@ export default function Home() {
                         <div key={troll.id} className="troll-item">
                           <div className="troll-info">
                             <div className="troll-nick">{troll.nick}</div>
-                            <div className="troll-steamid">Steam ID: {troll.steamId}</div>
-                            <div className="troll-reason">"{troll.reason}"</div>
-                            <div className="troll-date">
-                              Agregado: {new Date(troll.dateAdded).toLocaleDateString('es-AR')}
+                            <div className="troll-details">
+                              <div className="troll-steamid">
+                                <strong>Steam ID:</strong> {troll.steamId}
+                              </div>
+                              {troll.steamId64 && troll.steamId64 !== 'No especificado' && troll.steamId64 !== 'No resuelto' && (
+                                <div className="troll-steamid64">
+                                  <strong>Steam ID64:</strong> {troll.steamId64}
+                                </div>
+                              )}
+                              <div className="troll-date">
+                                <strong>Agregado:</strong> {new Date(troll.dateAdded).toLocaleDateString('es-AR')}
+                              </div>
                             </div>
+                            <div className="troll-reason">"{troll.reason}"</div>
                           </div>
                           <div className="troll-actions">
+                            <a
+                              href={troll.steamUrl || `https://steamcommunity.com/profiles/${troll.steamId64 || troll.steamId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="steam-btn"
+                              title="Ver perfil en Steam"
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.52 0 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="#1b2838"/>
+                              </svg>
+                            </a>
+                            <a
+                              href={`https://faceitfinder.com/profile/${troll.steamId64 || troll.steamId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="faceit-finder-btn"
+                              title="Buscar en FaceitFinder"
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#88ccff"/>
+                              </svg>
+                            </a>
                             <button 
                               className="remove-troll-btn"
                               onClick={() => removeTroll(troll.id)}
@@ -420,7 +463,7 @@ export default function Home() {
               <div className="tools-panel">
                 <div className="tools-header">
                   <h3>🔧 Herramientas de Búsqueda</h3>
-                  <p>Busca información de Steam y Faceit manualmente</p>
+                  <p>Busca Steam ID64 y información de Faceit manualmente</p>
                 </div>
                 
                 {/* Botones para mostrar herramientas */}
@@ -438,6 +481,15 @@ export default function Home() {
                     >
                       🔍 Abrir SteamID.io
                     </button>
+                    <div className="tools-instructions">
+                      <p>📋 <strong>Cómo usar:</strong></p>
+                      <ol>
+                        <li>Abre una herramienta haciendo clic en los botones</li>
+                        <li>Busca el Steam ID64 del troll</li>
+                        <li>Copia el Steam ID64 (17 dígitos)</li>
+                        <li>Pégalo en el formulario de la izquierda</li>
+                      </ol>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -470,6 +522,9 @@ export default function Home() {
                     <div className="tab-content">
                       {activeTab === 'faceitfinder' && (
                         <div className="tool-container">
+                          <div className="tool-instructions">
+                            <p>🎯 <strong>FaceitFinder:</strong> Busca perfiles de Faceit usando Steam ID</p>
+                          </div>
                           <iframe
                             src="https://faceitfinder.com/"
                             title="FaceitFinder"
@@ -482,6 +537,9 @@ export default function Home() {
                       
                       {activeTab === 'steamid' && (
                         <div className="tool-container">
+                          <div className="tool-instructions">
+                            <p>🔍 <strong>SteamID.io:</strong> Convierte URLs de Steam a Steam ID64</p>
+                          </div>
                           <iframe
                             src="https://steamid.io/"
                             title="SteamID.io"
