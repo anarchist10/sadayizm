@@ -447,6 +447,11 @@ body {
   color: #88ccff;
 }
 
+.troll-steamid64 {
+  color: #66d9ff;
+  font-weight: 500;
+}
+
 .troll-faceit-nick {
   color: #ff5500;
 }

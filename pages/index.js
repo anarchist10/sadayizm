@@ -79,37 +79,97 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
   }
 }
 
+// Función para resolver Steam ID64 desde custom URL usando Steam Web API
+async function resolveSteamId64FromCustomUrl(customUrl) {
+  try {
+    console.log(`🔍 Intentando resolver Steam ID64 para custom URL: ${customUrl}`);
+    
+    // Primero intentar buscar en nuestros usuarios conocidos
+    const knownUser = nicks.find(nick => {
+      const urlMatch = nick.url.match(/steamcommunity\.com\/id\/([^\/\s]+)/);
+      return urlMatch && urlMatch[1] === customUrl;
+    });
+    
+    if (knownUser && knownUser.faceitApi) {
+      const steamId64Match = knownUser.faceitApi.match(/\b(7656119\d{10})\b/);
+      if (steamId64Match) {
+        console.log(`✅ Steam ID64 encontrado en usuarios conocidos: ${steamId64Match[1]}`);
+        return steamId64Match[1];
+      }
+    }
+    
+    // Si no se encuentra en usuarios conocidos, intentar con métodos alternativos
+    console.log(`⚠️ No se encontró Steam ID64 para ${customUrl} en usuarios conocidos`);
+    
+    // Aquí podrías implementar otros métodos como:
+    // - Steam Web API (requiere API key)
+    // - Scraping de la página de Steam
+    // - Base de datos local de conversiones conocidas
+    
+    return null;
+  } catch (error) {
+    console.error('Error resolviendo Steam ID64:', error);
+    return null;
+  }
+}
+
 // Función mejorada para extraer Steam ID de URL o texto
-function extractSteamId(input) {
-  if (!input) return '';
+async function extractSteamId(input) {
+  if (!input) return { steamId: '', steamId64: '' };
   
   const cleanInput = input.trim();
   
   // Si ya es un Steam ID64 (17 dígitos)
-  if (/^\d{17}$/.test(cleanInput)) {
-    return cleanInput;
+  if (/^7656119\d{10}$/.test(cleanInput)) {
+    return { 
+      steamId: cleanInput, 
+      steamId64: cleanInput 
+    };
   }
   
   // Buscar Steam ID64 en URLs o texto
   const steamId64Match = cleanInput.match(/\b(7656119\d{10})\b/);
   if (steamId64Match) {
-    return steamId64Match[1];
+    return { 
+      steamId: steamId64Match[1], 
+      steamId64: steamId64Match[1] 
+    };
   }
   
   // Buscar custom URL en Steam URLs
   const customUrlMatch = cleanInput.match(/steamcommunity\.com\/id\/([^\/\s]+)/);
   if (customUrlMatch) {
-    return customUrlMatch[1];
+    const customUrl = customUrlMatch[1];
+    const resolvedSteamId64 = await resolveSteamId64FromCustomUrl(customUrl);
+    
+    return {
+      steamId: customUrl,
+      steamId64: resolvedSteamId64 || 'No resuelto'
+    };
   }
   
   // Buscar profile URL
   const profileMatch = cleanInput.match(/steamcommunity\.com\/profiles\/(\d+)/);
   if (profileMatch) {
-    return profileMatch[1];
+    const steamId64 = profileMatch[1];
+    return { 
+      steamId: steamId64, 
+      steamId64: steamId64 
+    };
   }
   
-  // Si no encuentra nada específico, devolver el input limpio
-  return cleanInput.replace(/[^\w\d]/g, '');
+  // Si no encuentra nada específico, intentar resolver como custom URL
+  const cleanCustomUrl = cleanInput.replace(/[^\w\d]/g, '');
+  if (cleanCustomUrl.length >= 3) {
+    const resolvedSteamId64 = await resolveSteamId64FromCustomUrl(cleanCustomUrl);
+    
+    return {
+      steamId: cleanCustomUrl,
+      steamId64: resolvedSteamId64 || 'No resuelto'
+    };
+  }
+  
+  return { steamId: cleanInput, steamId64: 'No válido' };
 }
 
 // Función para generar URL de Steam
@@ -117,7 +177,7 @@ function generateSteamUrl(steamId) {
   if (!steamId) return '#';
   
   // Si es Steam ID64 (17 dígitos), usar URL de profile
-  if (/^\d{17}$/.test(steamId)) {
+  if (/^7656119\d{10}$/.test(steamId)) {
     return `https://steamcommunity.com/profiles/${steamId}`;
   }
   
@@ -126,11 +186,16 @@ function generateSteamUrl(steamId) {
 }
 
 // Función para generar URL de FaceitFinder
-function generateFaceitFinderUrl(steamId) {
+function generateFaceitFinderUrl(steamId, steamId64) {
+  // Preferir Steam ID64 si está disponible
+  if (steamId64 && /^7656119\d{10}$/.test(steamId64)) {
+    return `https://faceitfinder.com/profile/${steamId64}`;
+  }
+  
   if (!steamId) return '#';
   
   // FaceitFinder funciona mejor con Steam ID64
-  if (/^\d{17}$/.test(steamId)) {
+  if (/^7656119\d{10}$/.test(steamId)) {
     return `https://faceitfinder.com/profile/${steamId}`;
   }
   
@@ -139,11 +204,18 @@ function generateFaceitFinderUrl(steamId) {
 }
 
 // Función para determinar si un Steam ID es válido
-function isValidSteamId(steamId) {
-  if (!steamId) return false;
+function isValidSteamId(steamIdInfo) {
+  if (!steamIdInfo || !steamIdInfo.steamId) return false;
+  
+  const { steamId, steamId64 } = steamIdInfo;
   
   // Steam ID64 válido (debe empezar con 7656119 y tener 17 dígitos)
   if (/^7656119\d{10}$/.test(steamId)) {
+    return true;
+  }
+  
+  // Si tenemos un Steam ID64 resuelto válido
+  if (steamId64 && /^7656119\d{10}$/.test(steamId64)) {
     return true;
   }
   
@@ -156,8 +228,14 @@ function isValidSteamId(steamId) {
 }
 
 // Función mejorada para obtener información de Faceit con múltiples métodos
-async function fetchFaceitInfo(steamId) {
-  console.log(`🔍 Buscando información de Faceit para Steam ID: ${steamId}`);
+async function fetchFaceitInfo(steamId64) {
+  console.log(`🔍 Buscando información de Faceit para Steam ID64: ${steamId64}`);
+  
+  // Solo proceder si tenemos un Steam ID64 válido
+  if (!steamId64 || !/^7656119\d{10}$/.test(steamId64)) {
+    console.log('❌ Steam ID64 no válido para búsqueda de Faceit');
+    return null;
+  }
   
   // Método 1: FaceitFinder API
   try {
@@ -165,7 +243,7 @@ async function fetchFaceitInfo(steamId) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
     
-    const response = await fetch(`https://faceitfinder.com/api/lookup?id=${steamId}`, {
+    const response = await fetch(`https://faceitfinder.com/api/lookup?id=${steamId64}`, {
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
@@ -196,14 +274,11 @@ async function fetchFaceitInfo(steamId) {
   try {
     console.log('📡 Intentando con método alternativo...');
     
-    // Simulamos una búsqueda alternativa - en un caso real podrías usar otra API
-    // Por ahora, intentaremos extraer información de patrones conocidos
-    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     // Intentar con una API proxy o alternativa
-    const proxyResponse = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://faceitfinder.com/api/lookup?id=${steamId}`)}`, {
+    const proxyResponse = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://faceitfinder.com/api/lookup?id=${steamId64}`)}`, {
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
@@ -235,10 +310,13 @@ async function fetchFaceitInfo(steamId) {
   // Método 3: Buscar en base a patrones conocidos o sugerencias
   console.log('🤔 Intentando con patrones conocidos...');
   
-  // Si el Steam ID coincide con alguno de nuestros usuarios conocidos
+  // Si el Steam ID64 coincide con alguno de nuestros usuarios conocidos
   const knownUser = nicks.find(nick => {
-    const knownSteamId = extractSteamId(nick.url);
-    return knownSteamId === steamId;
+    if (nick.faceitApi) {
+      const knownSteamId64Match = nick.faceitApi.match(/\b(7656119\d{10})\b/);
+      return knownSteamId64Match && knownSteamId64Match[1] === steamId64;
+    }
+    return false;
   });
   
   if (knownUser && knownUser.faceitUrl) {
@@ -328,11 +406,11 @@ export default function Home() {
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
       setResolvingFaceit(true);
-      setFaceitStatus('🔍 Validando Steam ID...');
+      setFaceitStatus('🔍 Validando y resolviendo Steam ID...');
       
-      const extractedSteamId = extractSteamId(newTroll.steamId.trim());
+      const steamIdInfo = await extractSteamId(newTroll.steamId.trim());
       
-      if (!isValidSteamId(extractedSteamId)) {
+      if (!isValidSteamId(steamIdInfo)) {
         alert('Steam ID no válido. Debe ser un Steam ID64 (17 dígitos) o un nombre de usuario válido.');
         setResolvingFaceit(false);
         setFaceitStatus('');
@@ -341,8 +419,12 @@ export default function Home() {
       
       setFaceitStatus('🔍 Buscando información de Faceit...');
       
-      // Obtener información de Faceit
-      const faceitInfo = await fetchFaceitInfo(extractedSteamId);
+      // Obtener información de Faceit usando el Steam ID64 si está disponible
+      const steamId64ForFaceit = steamIdInfo.steamId64 && /^7656119\d{10}$/.test(steamIdInfo.steamId64) 
+        ? steamIdInfo.steamId64 
+        : (steamIdInfo.steamId && /^7656119\d{10}$/.test(steamIdInfo.steamId) ? steamIdInfo.steamId : null);
+      
+      const faceitInfo = steamId64ForFaceit ? await fetchFaceitInfo(steamId64ForFaceit) : null;
       
       if (faceitInfo) {
         setFaceitStatus(`✅ Encontrado: ${faceitInfo.nickname} (${faceitInfo.method})`);
@@ -352,10 +434,11 @@ export default function Home() {
       
       const troll = {
         nick: newTroll.nick.trim(),
-        steamId: extractedSteamId,
+        steamId: steamIdInfo.steamId,
+        steamId64: steamIdInfo.steamId64,
         reason: newTroll.reason.trim() || 'Sin razón especificada',
-        steamUrl: generateSteamUrl(extractedSteamId),
-        faceitFinderUrl: generateFaceitFinderUrl(extractedSteamId),
+        steamUrl: generateSteamUrl(steamIdInfo.steamId),
+        faceitFinderUrl: generateFaceitFinderUrl(steamIdInfo.steamId, steamIdInfo.steamId64),
         faceitNickname: faceitInfo?.nickname || 'No encontrado',
         faceitUrl: faceitInfo?.faceitUrl || '#'
       };
@@ -573,7 +656,7 @@ export default function Home() {
                 />
                 <div className="steam-id-help">
                   💡 <strong>Tip:</strong> Puedes pegar la URL completa de Steam o solo el Steam ID64. 
-                  Se intentará resolver automáticamente el nickname de Faceit usando múltiples métodos.
+                  Se intentará resolver automáticamente el Steam ID64 y el nickname de Faceit usando múltiples métodos.
                 </div>
                 
                 {/* Status de resolución de Faceit */}
@@ -610,6 +693,11 @@ export default function Home() {
                           <div className="troll-steamid">
                             <strong>Steam ID:</strong> {troll.steamId}
                           </div>
+                          {troll.steamId64 && troll.steamId64 !== 'No resuelto' && troll.steamId64 !== 'No válido' && (
+                            <div className="troll-steamid64">
+                              <strong>Steam ID64:</strong> {troll.steamId64}
+                            </div>
+                          )}
                           <div className="troll-faceit-nick">
                             <strong>Faceit:</strong> {troll.faceitNickname || 'No encontrado'}
                           </div>
