@@ -92,6 +92,7 @@ export default function Home() {
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', reason: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
+  const [activeTab, setActiveTab] = useState('faceitfinder'); // Nueva state para las pestañas
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -320,7 +321,7 @@ export default function Home() {
       {/* Troll List Modal */}
       {showTrollList && (
         <div className="troll-modal">
-          <div className="troll-content-with-faceitfinder">
+          <div className="troll-content-with-tools">
             <div className="troll-header">
               <h2>🚨 Lista de Trolls/Tóxicos</h2>
               <button 
@@ -404,20 +405,54 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Panel derecho - FaceitFinder */}
-              <div className="faceitfinder-panel">
-                <div className="faceitfinder-header">
-                  <h3>🔍 FaceitFinder</h3>
-                  <p>Busca perfiles de Faceit manualmente</p>
+              {/* Panel derecho - Herramientas con pestañas */}
+              <div className="tools-panel">
+                <div className="tools-header">
+                  <h3>🔧 Herramientas de Búsqueda</h3>
+                  <p>Busca información de Steam y Faceit manualmente</p>
                 </div>
-                <div className="faceitfinder-container">
-                  <iframe
-                    src="https://faceitfinder.com/"
-                    title="FaceitFinder"
-                    className="faceitfinder-iframe"
-                    frameBorder="0"
-                    allowFullScreen
-                  />
+                
+                {/* Pestañas */}
+                <div className="tabs-container">
+                  <button 
+                    className={`tab-button ${activeTab === 'faceitfinder' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('faceitfinder')}
+                  >
+                    🎯 FaceitFinder
+                  </button>
+                  <button 
+                    className={`tab-button ${activeTab === 'steamid' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('steamid')}
+                  >
+                    🔍 SteamID.pro
+                  </button>
+                </div>
+
+                {/* Contenido de las pestañas */}
+                <div className="tab-content">
+                  {activeTab === 'faceitfinder' && (
+                    <div className="tool-container">
+                      <iframe
+                        src="https://faceitfinder.com/"
+                        title="FaceitFinder"
+                        className="tool-iframe"
+                        frameBorder="0"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+                  
+                  {activeTab === 'steamid' && (
+                    <div className="tool-container">
+                      <iframe
+                        src="https://steamid.pro/"
+                        title="SteamID.pro"
+                        className="tool-iframe"
+                        frameBorder="0"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
