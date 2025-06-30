@@ -370,7 +370,7 @@ export default function Home() {
                       placeholder="Steam ID64 (opcional - búscalo en las herramientas →)"
                       value={newTroll.steamId64}
                       onChange={(e) => setNewTroll({...newTroll, steamId64: e.target.value})}
-                      className="troll-input steamid64-input"
+                      className="troll-input"
                     />
                     <input
                       type="text"
@@ -379,10 +379,6 @@ export default function Home() {
                       onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
                       className="troll-input"
                     />
-                    <div className="steamid64-help">
-                      💡 <strong>Tip:</strong> Usa las herramientas de la derecha para buscar el Steam ID64 exacto. 
-                      Copia el Steam ID64 de 17 dígitos y pégalo en el campo de arriba para mayor precisión.
-                    </div>
                     <button 
                       className="add-troll-btn"
                       onClick={addTroll}
@@ -463,7 +459,7 @@ export default function Home() {
               <div className="tools-panel">
                 <div className="tools-header">
                   <h3>🔧 Herramientas de Búsqueda</h3>
-                  <p>Busca Steam ID64 y información de Faceit manualmente</p>
+                  <p>Busca Steam ID64 y información de Faceit</p>
                 </div>
                 
                 {/* Botones para mostrar herramientas */}
@@ -481,15 +477,6 @@ export default function Home() {
                     >
                       🔍 Abrir SteamID.io
                     </button>
-                    <div className="tools-instructions">
-                      <p>📋 <strong>Cómo usar:</strong></p>
-                      <ol>
-                        <li>Abre una herramienta haciendo clic en los botones</li>
-                        <li>Busca el Steam ID64 del troll</li>
-                        <li>Copia el Steam ID64 (17 dígitos)</li>
-                        <li>Pégalo en el formulario de la izquierda</li>
-                      </ol>
-                    </div>
                   </div>
                 ) : (
                   <>
