@@ -502,6 +502,13 @@ body {
   color: #888;
 }
 
+/* Botones del formulario */
+.form-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
 .add-troll-btn {
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #ff4444 0%, #cc3333 100%);
@@ -512,8 +519,8 @@ body {
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 0.5rem;
   font-weight: 500;
+  flex: 1;
 }
 
 .add-troll-btn:hover:not(:disabled) {
@@ -525,6 +532,26 @@ body {
 .add-troll-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Botón de actualizar */
+.update-btn {
+  background: linear-gradient(135deg, #28a745 0%, #20a83a 100%) !important;
+}
+
+.update-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34ce57 0%, #28a745 100%) !important;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Botón de cancelar */
+.cancel-btn {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c868e 0%, #6c757d 100%) !important;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3) !important;
 }
 
 /* Troll List Section */
@@ -586,6 +613,18 @@ body {
   background: rgba(255, 68, 68, 0.1);
   border-color: rgba(255, 68, 68, 0.4);
   transform: translateX(5px);
+}
+
+/* Troll item en modo edición */
+.troll-item.editing {
+  background: rgba(40, 167, 69, 0.1) !important;
+  border-color: rgba(40, 167, 69, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.troll-item.editing:hover {
+  background: rgba(40, 167, 69, 0.15) !important;
+  transform: none;
 }
 
 .troll-info {
@@ -705,6 +744,27 @@ body {
 .faceit-profile-btn:hover {
   background: rgba(255, 85, 0, 0.3);
   transform: scale(1.1);
+}
+
+.edit-troll-btn {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid #ffc107;
+  color: #ffc107;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.edit-troll-btn:hover:not(:disabled) {
+  background: rgba(255, 193, 7, 0.3);
+  transform: scale(1.1);
+}
+
+.edit-troll-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .remove-troll-btn {
@@ -843,5 +903,9 @@ body {
     min-width: 120px;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+  }
+  
+  .form-buttons {
+    flex-direction: column;
   }
 }

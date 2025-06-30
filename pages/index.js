@@ -79,6 +79,27 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
   }
 }
 
+// Función para generar URL de Steam correcta
+function generateSteamUrl(steamId, steamId64) {
+  // Si steamId ya es una URL completa, usarla directamente
+  if (steamId.startsWith('http')) {
+    return steamId;
+  }
+  
+  // Si tenemos steamId64, usar formato de profiles
+  if (steamId64 && steamId64 !== 'No especificado' && steamId64 !== 'No resuelto' && steamId64.length === 17) {
+    return `https://steamcommunity.com/profiles/${steamId64}`;
+  }
+  
+  // Si steamId parece ser un ID numérico, usar formato de profiles
+  if (/^\d+$/.test(steamId)) {
+    return `https://steamcommunity.com/profiles/${steamId}`;
+  }
+  
+  // Si no, asumir que es un custom ID y usar formato /id/
+  return `https://steamcommunity.com/id/${steamId}`;
+}
+
 export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
@@ -94,6 +115,7 @@ export default function Home() {
   const [loadingTrolls, setLoadingTrolls] = useState(false);
   const [activeTab, setActiveTab] = useState(null); // Cambio: null por defecto para ocultar
   const [showTools, setShowTools] = useState(false); // Nuevo estado para mostrar/ocultar herramientas
+  const [editingTroll, setEditingTroll] = useState(null); // Estado para el troll que se está editando
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -181,6 +203,41 @@ export default function Home() {
     }
   };
 
+  // Editar troll existente
+  const updateTroll = async () => {
+    if (editingTroll && editingTroll.nick.trim() && editingTroll.steamId.trim()) {
+      try {
+        const response = await fetch(`/api/trolls?id=${editingTroll.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nick: editingTroll.nick.trim(),
+            steamId: editingTroll.steamId.trim(),
+            steamId64: editingTroll.steamId64.trim() || 'No especificado',
+            reason: editingTroll.reason.trim() || 'Sin razón especificada',
+            faceitUrl: editingTroll.faceitUrl.trim() || ''
+          }),
+        });
+
+        if (response.ok) {
+          const updatedTroll = await response.json();
+          setTrollList(prev => prev.map(troll => 
+            troll.id === editingTroll.id ? updatedTroll : troll
+          ));
+          setEditingTroll(null);
+        } else {
+          console.error('Error updating troll:', response.statusText);
+          alert('Error al actualizar el troll. Inténtalo de nuevo.');
+        }
+      } catch (error) {
+        console.error('Error updating troll:', error);
+        alert('Error de conexión. Inténtalo de nuevo.');
+      }
+    }
+  };
+
   // Remover troll de la base de datos
   const removeTroll = async (trollId) => {
     try {
@@ -204,6 +261,16 @@ export default function Home() {
   const showToolsWithTab = (tabName) => {
     setShowTools(true);
     setActiveTab(tabName);
+  };
+
+  // Iniciar edición de un troll
+  const startEditTroll = (troll) => {
+    setEditingTroll({ ...troll });
+  };
+
+  // Cancelar edición
+  const cancelEdit = () => {
+    setEditingTroll(null);
   };
 
   useEffect(() => {
@@ -339,6 +406,7 @@ export default function Home() {
                   setShowTrollList(false);
                   setShowTools(false);
                   setActiveTab(null);
+                  setEditingTroll(null);
                 }}
               >
                 ✕
@@ -350,50 +418,85 @@ export default function Home() {
               <div className="troll-left-panel">
                 {/* Formulario para agregar nuevo troll */}
                 <div className="add-troll-section">
-                  <h3>➕ Agregar Troll</h3>
+                  <h3>{editingTroll ? '✏️ Editar Troll' : '➕ Agregar Troll'}</h3>
                   <div className="troll-form">
                     <input
                       type="text"
                       placeholder="Nick del troll"
-                      value={newTroll.nick}
-                      onChange={(e) => setNewTroll({...newTroll, nick: e.target.value})}
+                      value={editingTroll ? editingTroll.nick : newTroll.nick}
+                      onChange={(e) => editingTroll 
+                        ? setEditingTroll({...editingTroll, nick: e.target.value})
+                        : setNewTroll({...newTroll, nick: e.target.value})
+                      }
                       className="troll-input"
                     />
                     <input
                       type="text"
                       placeholder="Steam ID o URL de Steam"
-                      value={newTroll.steamId}
-                      onChange={(e) => setNewTroll({...newTroll, steamId: e.target.value})}
+                      value={editingTroll ? editingTroll.steamId : newTroll.steamId}
+                      onChange={(e) => editingTroll 
+                        ? setEditingTroll({...editingTroll, steamId: e.target.value})
+                        : setNewTroll({...newTroll, steamId: e.target.value})
+                      }
                       className="troll-input"
                     />
                     <input
                       type="text"
                       placeholder="Steam ID64 (opcional - búscalo en las herramientas →)"
-                      value={newTroll.steamId64}
-                      onChange={(e) => setNewTroll({...newTroll, steamId64: e.target.value})}
+                      value={editingTroll ? editingTroll.steamId64 : newTroll.steamId64}
+                      onChange={(e) => editingTroll 
+                        ? setEditingTroll({...editingTroll, steamId64: e.target.value})
+                        : setNewTroll({...newTroll, steamId64: e.target.value})
+                      }
                       className="troll-input"
                     />
                     <input
                       type="text"
                       placeholder="URL de Faceit (opcional - búscalo en las herramientas →)"
-                      value={newTroll.faceitUrl}
-                      onChange={(e) => setNewTroll({...newTroll, faceitUrl: e.target.value})}
+                      value={editingTroll ? editingTroll.faceitUrl : newTroll.faceitUrl}
+                      onChange={(e) => editingTroll 
+                        ? setEditingTroll({...editingTroll, faceitUrl: e.target.value})
+                        : setNewTroll({...newTroll, faceitUrl: e.target.value})
+                      }
                       className="troll-input"
                     />
                     <input
                       type="text"
                       placeholder="Razón (opcional)"
-                      value={newTroll.reason}
-                      onChange={(e) => setNewTroll({...newTroll, reason: e.target.value})}
+                      value={editingTroll ? editingTroll.reason : newTroll.reason}
+                      onChange={(e) => editingTroll 
+                        ? setEditingTroll({...editingTroll, reason: e.target.value})
+                        : setNewTroll({...newTroll, reason: e.target.value})
+                      }
                       className="troll-input"
                     />
-                    <button 
-                      className="add-troll-btn"
-                      onClick={addTroll}
-                      disabled={!newTroll.nick.trim() || !newTroll.steamId.trim()}
-                    >
-                      Agregar Troll
-                    </button>
+                    <div className="form-buttons">
+                      {editingTroll ? (
+                        <>
+                          <button 
+                            className="add-troll-btn update-btn"
+                            onClick={updateTroll}
+                            disabled={!editingTroll.nick.trim() || !editingTroll.steamId.trim()}
+                          >
+                            💾 Guardar Cambios
+                          </button>
+                          <button 
+                            className="add-troll-btn cancel-btn"
+                            onClick={cancelEdit}
+                          >
+                            ❌ Cancelar
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          className="add-troll-btn"
+                          onClick={addTroll}
+                          disabled={!newTroll.nick.trim() || !newTroll.steamId.trim()}
+                        >
+                          Agregar Troll
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -407,7 +510,7 @@ export default function Home() {
                   ) : (
                     <div className="troll-list">
                       {trollList.map(troll => (
-                        <div key={troll.id} className="troll-item">
+                        <div key={troll.id} className={`troll-item ${editingTroll && editingTroll.id === troll.id ? 'editing' : ''}`}>
                           <div className="troll-info">
                             <div className="troll-nick">{troll.nick}</div>
                             <div className="troll-details">
@@ -432,7 +535,7 @@ export default function Home() {
                           </div>
                           <div className="troll-actions">
                             <a
-                              href={troll.steamUrl || `https://steamcommunity.com/profiles/${troll.steamId64 || troll.steamId}`}
+                              href={generateSteamUrl(troll.steamId, troll.steamId64)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="steam-btn"
@@ -466,6 +569,14 @@ export default function Home() {
                                 </svg>
                               </a>
                             )}
+                            <button 
+                              className="edit-troll-btn"
+                              onClick={() => startEditTroll(troll)}
+                              title="Editar troll"
+                              disabled={editingTroll !== null}
+                            >
+                              ✏️
+                            </button>
                             <button 
                               className="remove-troll-btn"
                               onClick={() => removeTroll(troll.id)}

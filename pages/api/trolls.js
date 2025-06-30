@@ -8,7 +8,7 @@ export default function handler(req, res) {
     res.status(200).json(trollList);
   } else if (req.method === 'POST') {
     // Agregar nuevo troll
-    const { nick, steamId, steamId64, reason, steamUrl, faceitFinderUrl, faceitNickname, faceitUrl } = req.body;
+    const { nick, steamId, steamId64, reason, faceitUrl } = req.body;
     
     if (!nick || !steamId) {
       return res.status(400).json({ error: 'Nick y Steam ID son requeridos' });
@@ -20,15 +20,40 @@ export default function handler(req, res) {
       steamId,
       steamId64: steamId64 || 'No resuelto',
       reason: reason || 'Sin razón especificada',
-      steamUrl: steamUrl || `https://steamcommunity.com/profiles/${steamId}`,
-      faceitFinderUrl: faceitFinderUrl || `https://faceitfinder.com/profile/${steamId}`,
-      faceitNickname: faceitNickname || 'No encontrado',
       faceitUrl: faceitUrl || '',
       dateAdded: new Date().toISOString()
     };
     
     trollList.push(newTroll);
     res.status(201).json(newTroll);
+  } else if (req.method === 'PUT') {
+    // Actualizar troll existente
+    const { id } = req.query;
+    const { nick, steamId, steamId64, reason, faceitUrl } = req.body;
+    const trollId = parseInt(id);
+    
+    const trollIndex = trollList.findIndex(troll => troll.id === trollId);
+    
+    if (trollIndex === -1) {
+      return res.status(404).json({ error: 'Troll no encontrado' });
+    }
+    
+    if (!nick || !steamId) {
+      return res.status(400).json({ error: 'Nick y Steam ID son requeridos' });
+    }
+    
+    // Actualizar el troll manteniendo la fecha original
+    trollList[trollIndex] = {
+      ...trollList[trollIndex],
+      nick,
+      steamId,
+      steamId64: steamId64 || 'No resuelto',
+      reason: reason || 'Sin razón especificada',
+      faceitUrl: faceitUrl || '',
+      lastModified: new Date().toISOString()
+    };
+    
+    res.status(200).json(trollList[trollIndex]);
   } else if (req.method === 'DELETE') {
     // Eliminar troll
     const { id } = req.query;
@@ -43,7 +68,7 @@ export default function handler(req, res) {
       res.status(404).json({ error: 'Troll no encontrado' });
     }
   } else {
-    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
+    res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
