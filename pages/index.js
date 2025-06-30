@@ -564,9 +564,13 @@ export default function Home() {
                                 className="faceit-profile-btn"
                                 title="Ver perfil en Faceit"
                               >
-                                <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
-                                </svg>
+                                <img 
+                                  src="/faceitlogo.png" 
+                                  alt="Faceit" 
+                                  width="20" 
+                                  height="20" 
+                                  style={{ objectFit: 'contain' }}
+                                />
                               </a>
                             )}
                             <button 
@@ -747,9 +751,13 @@ export default function Home() {
                       rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center' }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 28L30 16L2 4L7.5 16L2 28Z" fill="#FF5500"/>
-                      </svg>
+                      <img 
+                        src="/faceitlogo.png" 
+                        alt="Faceit" 
+                        width="20" 
+                        height="20" 
+                        style={{ objectFit: 'contain' }}
+                      />
                     </a>
                   </>
                 )}
