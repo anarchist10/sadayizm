@@ -421,10 +421,16 @@ export default function Home() {
                     🎯 FaceitFinder
                   </button>
                   <button 
-                    className={`tab-button ${activeTab === 'steamid' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('steamid')}
+                    className={`tab-button ${activeTab === 'steamidfinder' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('steamidfinder')}
                   >
-                    🔍 SteamID.pro
+                    🔍 SteamIDFinder
+                  </button>
+                  <button 
+                    className={`tab-button ${activeTab === 'steamrep' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('steamrep')}
+                  >
+                    🛡️ SteamRep
                   </button>
                 </div>
 
@@ -442,11 +448,23 @@ export default function Home() {
                     </div>
                   )}
                   
-                  {activeTab === 'steamid' && (
+                  {activeTab === 'steamidfinder' && (
                     <div className="tool-container">
                       <iframe
-                        src="https://steamid.pro/"
-                        title="SteamID.pro"
+                        src="https://steamidfinder.com/"
+                        title="SteamIDFinder"
+                        className="tool-iframe"
+                        frameBorder="0"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === 'steamrep' && (
+                    <div className="tool-container">
+                      <iframe
+                        src="https://steamrep.com/"
+                        title="SteamRep"
                         className="tool-iframe"
                         frameBorder="0"
                         allowFullScreen
