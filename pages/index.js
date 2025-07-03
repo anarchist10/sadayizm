@@ -9,7 +9,7 @@ const nicks = [
   { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
   { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
@@ -34,39 +34,48 @@ function parseElo(rawElo) {
   return 0;
 }
 
-// Función para hacer fetch con timeout más corto
-async function fetchEloFast(nick) {
-  try {
-    console.log(`Fetching ELO for ${nick.name}`);
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
-    
-    const response = await fetch(nick.faceitApi, {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json',
+// Función para hacer fetch con retry y timeout
+async function fetchEloWithRetry(nick, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Fetching ELO for ${nick.name} (attempt ${attempt})`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      
+      const response = await fetch(nick.faceitApi, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      
+      const data = await response.json();
+      console.log(`${nick.name} API response:`, data);
+      
+      const eloValue = data.elo !== undefined ? data.elo : data;
+      const parsedElo = parseElo(eloValue);
+      
+      console.log(`${nick.name} - Raw: ${eloValue}, Parsed: ${parsedElo}`);
+      return parsedElo;
+      
+    } catch (error) {
+      console.error(`${nick.name} attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        console.error(`${nick.name} failed after ${maxRetries} attempts`);
+        return 'N/A';
+      }
+      
+      // Esperar antes del siguiente intento
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
-    
-    const data = await response.json();
-    console.log(`${nick.name} API response:`, data);
-    
-    const eloValue = data.elo !== undefined ? data.elo : data;
-    const parsedElo = parseElo(eloValue);
-    
-    console.log(`${nick.name} - Raw: ${eloValue}, Parsed: ${parsedElo}`);
-    return parsedElo;
-    
-  } catch (error) {
-    console.error(`${nick.name} failed:`, error.message);
-    return 'N/A';
   }
 }
 
@@ -95,6 +104,7 @@ export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [hoveredNick, setHoveredNick] = useState(null);
+  const [loadingElos, setLoadingElos] = useState(true);
   const [showTrollList, setShowTrollList] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
@@ -264,40 +274,35 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Función para cargar ELOs de forma paralela (mucho más rápido)
-    async function loadElosParallel() {
-      console.log('Starting parallel ELO loading...');
-      
-      // Crear todas las promesas de fetch al mismo tiempo
-      const eloPromises = nicks.map(async (nick) => {
-        if (nick.faceitApi) {
-          const elo = await fetchEloFast(nick);
-          return { name: nick.name, elo };
-        }
-        return { name: nick.name, elo: null };
-      });
-      
-      // Ejecutar todas las promesas en paralelo
-      const results = await Promise.all(eloPromises);
-      
-      // Construir el objeto de ELOs
+    // Función para cargar ELOs de forma secuencial (evita sobrecargar la API)
+    async function loadElos() {
+      setLoadingElos(true);
       const eloResults = {};
-      results.forEach(result => {
-        if (result.elo !== null) {
-          eloResults[result.name] = result.elo;
-        }
-      });
       
-      // Actualizar estado una sola vez con todos los ELOs
-      setElos(eloResults);
-      console.log('All ELOs loaded in parallel:', eloResults);
+      for (const nick of nicks) {
+        if (nick.faceitApi) {
+          // Pequeña pausa entre requests para no sobrecargar la API
+          if (Object.keys(eloResults).length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          const elo = await fetchEloWithRetry(nick);
+          eloResults[nick.name] = elo;
+          
+          // Actualizar estado inmediatamente para mostrar progreso
+          setElos(prev => ({ ...prev, [nick.name]: elo }));
+        }
+      }
+      
+      setLoadingElos(false);
+      console.log('All ELOs loaded:', eloResults);
     }
     
-    loadElosParallel();
+    loadElos();
   }, []);
 
   useEffect(() => {
-    if (Object.keys(elos).length === nicks.filter(nick => nick.faceitApi).length) {
+    if (Object.keys(elos).length === nicks.length) {
       const nicksWithElo = nicks.map(nick => ({
         ...nick,
         elo: elos[nick.name] === 'N/A' ? 0 : elos[nick.name]
@@ -687,6 +692,11 @@ export default function Home() {
 
       <div className="center-content">
         <div className="gothic-title">sadayizm</div>
+        {loadingElos && (
+          <div style={{ color: '#ffd700', fontSize: '1rem', marginBottom: '1rem' }}>
+            Cargando ELOs...
+          </div>
+        )}
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
             <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
