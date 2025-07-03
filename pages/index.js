@@ -35,13 +35,13 @@ function parseElo(rawElo) {
 }
 
 // Función para hacer fetch con retry y timeout
-async function fetchEloWithRetry(nick, maxRetries = 3) {
+async function fetchEloWithRetry(nick, maxRetries = 2) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Fetching ELO for ${nick.name} (attempt ${attempt})`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
       
       const response = await fetch(nick.faceitApi, {
         signal: controller.signal,
@@ -73,8 +73,8 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
         return 'N/A';
       }
       
-      // Esperar antes del siguiente intento
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      // Esperar antes del siguiente intento (menos tiempo)
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
     }
   }
 }
@@ -104,7 +104,6 @@ export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [hoveredNick, setHoveredNick] = useState(null);
-  const [loadingElos, setLoadingElos] = useState(true);
   const [showTrollList, setShowTrollList] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
@@ -274,49 +273,46 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Función para cargar ELOs de forma secuencial (evita sobrecargar la API)
+    // Función para cargar ELOs en paralelo (más rápido)
     async function loadElos() {
-      setLoadingElos(true);
-      const eloResults = {};
-      
-      for (const nick of nicks) {
+      // Crear todas las promesas de fetch en paralelo
+      const eloPromises = nicks.map(async (nick) => {
         if (nick.faceitApi) {
-          // Pequeña pausa entre requests para no sobrecargar la API
-          if (Object.keys(eloResults).length > 0) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-          
           const elo = await fetchEloWithRetry(nick);
-          eloResults[nick.name] = elo;
-          
-          // Actualizar estado inmediatamente para mostrar progreso
-          setElos(prev => ({ ...prev, [nick.name]: elo }));
+          return { name: nick.name, elo };
         }
-      }
+        return { name: nick.name, elo: null };
+      });
       
-      setLoadingElos(false);
-      console.log('All ELOs loaded:', eloResults);
+      // Ejecutar todas las promesas en paralelo y actualizar el estado conforme van llegando
+      eloPromises.forEach(async (promise) => {
+        const result = await promise;
+        if (result.elo !== null) {
+          setElos(prev => ({ ...prev, [result.name]: result.elo }));
+        }
+      });
+      
+      console.log('All ELO requests started in parallel');
     }
     
     loadElos();
   }, []);
 
   useEffect(() => {
-    if (Object.keys(elos).length === nicks.length) {
-      const nicksWithElo = nicks.map(nick => ({
-        ...nick,
-        elo: elos[nick.name] === 'N/A' ? 0 : elos[nick.name]
-      }));
-      
-      // Ordenar: primero por ELO válido (descendente), luego N/A al final
-      nicksWithElo.sort((a, b) => {
-        if (elos[a.name] === 'N/A' && elos[b.name] !== 'N/A') return 1;
-        if (elos[a.name] !== 'N/A' && elos[b.name] === 'N/A') return -1;
-        return b.elo - a.elo;
-      });
-      
-      setSortedNicks(nicksWithElo);
-    }
+    // Reordenar nicks cada vez que se actualiza un ELO
+    const nicksWithElo = nicks.map(nick => ({
+      ...nick,
+      elo: elos[nick.name] === 'N/A' ? 0 : (elos[nick.name] || 0)
+    }));
+    
+    // Ordenar: primero por ELO válido (descendente), luego N/A al final
+    nicksWithElo.sort((a, b) => {
+      if (elos[a.name] === 'N/A' && elos[b.name] !== 'N/A') return 1;
+      if (elos[a.name] !== 'N/A' && elos[b.name] === 'N/A') return -1;
+      return b.elo - a.elo;
+    });
+    
+    setSortedNicks(nicksWithElo);
   }, [elos]);
 
   useEffect(() => {
@@ -692,11 +688,6 @@ export default function Home() {
 
       <div className="center-content">
         <div className="gothic-title">sadayizm</div>
-        {loadingElos && (
-          <div style={{ color: '#ffd700', fontSize: '1rem', marginBottom: '1rem' }}>
-            Cargando ELOs...
-          </div>
-        )}
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
             <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
