@@ -799,6 +799,7 @@ export default function Home() {
                       {troll.nick}
                     </a>
                     {index < trollList.length - 1 && <span className="blacklist-separator">, </span>}
+                    }
                   </span>
                 ))}
               </div>
