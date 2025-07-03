@@ -9,7 +9,7 @@ const nicks = [
   { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
   { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
@@ -35,13 +35,13 @@ function parseElo(rawElo) {
 }
 
 // Función para hacer fetch con retry y timeout
-async function fetchEloWithRetry(nick, maxRetries = 2) {
+async function fetchEloWithRetry(nick, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Fetching ELO for ${nick.name} (attempt ${attempt})`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
       
       const response = await fetch(nick.faceitApi, {
         signal: controller.signal,
@@ -73,8 +73,8 @@ async function fetchEloWithRetry(nick, maxRetries = 2) {
         return 'N/A';
       }
       
-      // Esperar antes del siguiente intento (menos tiempo)
-      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+      // Esperar antes del siguiente intento
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
   }
 }
@@ -104,6 +104,7 @@ export default function Home() {
   const [elos, setElos] = useState({});
   const [sortedNicks, setSortedNicks] = useState(nicks);
   const [hoveredNick, setHoveredNick] = useState(null);
+  const [loadingElos, setLoadingElos] = useState(true);
   const [showTrollList, setShowTrollList] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
@@ -166,11 +167,6 @@ export default function Home() {
     }
     setLoadingTrolls(false);
   };
-
-  // Cargar lista de trolls al inicio para mostrar la blacklist
-  useEffect(() => {
-    loadTrollList();
-  }, []);
 
   // Agregar troll a la base de datos
   const addTroll = async () => {
@@ -278,46 +274,49 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Función para cargar ELOs en paralelo (más rápido)
+    // Función para cargar ELOs de forma secuencial (evita sobrecargar la API)
     async function loadElos() {
-      // Crear todas las promesas de fetch en paralelo
-      const eloPromises = nicks.map(async (nick) => {
+      setLoadingElos(true);
+      const eloResults = {};
+      
+      for (const nick of nicks) {
         if (nick.faceitApi) {
+          // Pequeña pausa entre requests para no sobrecargar la API
+          if (Object.keys(eloResults).length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
           const elo = await fetchEloWithRetry(nick);
-          return { name: nick.name, elo };
+          eloResults[nick.name] = elo;
+          
+          // Actualizar estado inmediatamente para mostrar progreso
+          setElos(prev => ({ ...prev, [nick.name]: elo }));
         }
-        return { name: nick.name, elo: null };
-      });
+      }
       
-      // Ejecutar todas las promesas en paralelo y actualizar el estado conforme van llegando
-      eloPromises.forEach(async (promise) => {
-        const result = await promise;
-        if (result.elo !== null) {
-          setElos(prev => ({ ...prev, [result.name]: result.elo }));
-        }
-      });
-      
-      console.log('All ELO requests started in parallel');
+      setLoadingElos(false);
+      console.log('All ELOs loaded:', eloResults);
     }
     
     loadElos();
   }, []);
 
   useEffect(() => {
-    // Reordenar nicks cada vez que se actualiza un ELO
-    const nicksWithElo = nicks.map(nick => ({
-      ...nick,
-      elo: elos[nick.name] === 'N/A' ? 0 : (elos[nick.name] || 0)
-    }));
-    
-    // Ordenar: primero por ELO válido (descendente), luego N/A al final
-    nicksWithElo.sort((a, b) => {
-      if (elos[a.name] === 'N/A' && elos[b.name] !== 'N/A') return 1;
-      if (elos[a.name] !== 'N/A' && elos[b.name] === 'N/A') return -1;
-      return b.elo - a.elo;
-    });
-    
-    setSortedNicks(nicksWithElo);
+    if (Object.keys(elos).length === nicks.length) {
+      const nicksWithElo = nicks.map(nick => ({
+        ...nick,
+        elo: elos[nick.name] === 'N/A' ? 0 : elos[nick.name]
+      }));
+      
+      // Ordenar: primero por ELO válido (descendente), luego N/A al final
+      nicksWithElo.sort((a, b) => {
+        if (elos[a.name] === 'N/A' && elos[b.name] !== 'N/A') return 1;
+        if (elos[a.name] !== 'N/A' && elos[b.name] === 'N/A') return -1;
+        return b.elo - a.elo;
+      });
+      
+      setSortedNicks(nicksWithElo);
+    }
   }, [elos]);
 
   useEffect(() => {
@@ -693,6 +692,11 @@ export default function Home() {
 
       <div className="center-content">
         <div className="gothic-title">sadayizm</div>
+        {loadingElos && (
+          <div style={{ color: '#ffd700', fontSize: '1rem', marginBottom: '1rem' }}>
+            Cargando ELOs...
+          </div>
+        )}
         <div className="nick-list">
           {sortedNicks.map((nick, idx) => (
             <div key={nick.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', position: 'relative' }}>
@@ -780,32 +784,6 @@ export default function Home() {
             </div>
           ))}
         </div>
-
-        {/* Blacklist horizontal */}
-        {trollList.length > 0 && (
-          <div className="blacklist-container">
-            <div className="blacklist-content">
-              <span className="blacklist-label">Blacklist:</span>
-              <div className="blacklist-scroll">
-                {trollList.map((troll, index) => (
-                  <span key={troll.id}>
-                    <a
-                      href={troll.faceitUrl || `https://faceitfinder.com/profile/${troll.steamId64 || troll.steamId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="blacklist-nick"
-                      title={`${troll.nick} - ${troll.reason}`}
-                    >
-                      {troll.nick}
-                    </a>
-                    {index < trollList.length - 1 && <span className="blacklist-separator">, </span>}
-                    }
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

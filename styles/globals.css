@@ -95,100 +95,6 @@ body {
   }
 }
 
-/* Blacklist Styles */
-.blacklist-container {
-  position: fixed;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.blacklist-content {
-  background: rgba(0, 0, 0, 0.8);
-  border: 2px solid #ff4444;
-  border-radius: 25px;
-  padding: 8px 20px;
-  max-width: 80vw;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(255, 68, 68, 0.3);
-  pointer-events: auto;
-  animation: slideInBlacklist 0.5s ease-out;
-}
-
-@keyframes slideInBlacklist {
-  from {
-    opacity: 0;
-    transform: translateY(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.blacklist-label {
-  color: #ff4444;
-  font-family: 'SadayizmFont', monospace;
-  font-size: 1rem;
-  font-weight: bold;
-  white-space: nowrap;
-  text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
-}
-
-.blacklist-scroll {
-  display: flex;
-  align-items: center;
-  overflow-x: auto;
-  max-width: 60vw;
-  white-space: nowrap;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  animation: scrollHorizontal 30s linear infinite;
-}
-
-.blacklist-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-@keyframes scrollHorizontal {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.blacklist-nick {
-  color: #ff4444;
-  text-decoration: none;
-  font-family: 'SadayizmFont', monospace;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  text-shadow: 0 0 5px rgba(255, 68, 68, 0.3);
-  cursor: pointer;
-}
-
-.blacklist-nick:hover {
-  color: #ff6666;
-  text-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
-  transform: scale(1.1);
-}
-
-.blacklist-separator {
-  color: #ff4444;
-  margin: 0 5px;
-  font-family: 'SadayizmFont', monospace;
-}
-
 /* Password Modal Styles */
 .password-modal {
   position: fixed;
@@ -1001,23 +907,5 @@ body {
   
   .form-buttons {
     flex-direction: column;
-  }
-
-  /* Responsive blacklist */
-  .blacklist-content {
-    max-width: 95vw;
-    padding: 6px 15px;
-  }
-  
-  .blacklist-label {
-    font-size: 0.9rem;
-  }
-  
-  .blacklist-scroll {
-    max-width: 70vw;
-  }
-  
-  .blacklist-nick {
-    font-size: 0.8rem;
   }
 }
