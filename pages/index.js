@@ -9,7 +9,7 @@ const nicks = [
   { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
   { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
@@ -166,6 +166,11 @@ export default function Home() {
     }
     setLoadingTrolls(false);
   };
+
+  // Cargar lista de trolls al inicio para mostrar la blacklist
+  useEffect(() => {
+    loadTrollList();
+  }, []);
 
   // Agregar troll a la base de datos
   const addTroll = async () => {
@@ -775,6 +780,31 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* Blacklist horizontal */}
+        {trollList.length > 0 && (
+          <div className="blacklist-container">
+            <div className="blacklist-content">
+              <span className="blacklist-label">Blacklist:</span>
+              <div className="blacklist-scroll">
+                {trollList.map((troll, index) => (
+                  <span key={troll.id}>
+                    <a
+                      href={troll.faceitUrl || `https://faceitfinder.com/profile/${troll.steamId64 || troll.steamId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="blacklist-nick"
+                      title={`${troll.nick} - ${troll.reason}`}
+                    >
+                      {troll.nick}
+                    </a>
+                    {index < trollList.length - 1 && <span className="blacklist-separator">, </span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
