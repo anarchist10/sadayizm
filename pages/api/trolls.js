@@ -2,17 +2,29 @@
 import fs from 'fs';
 import path from 'path';
 
-const DATA_FILE = path.join(process.cwd(), 'pages', 'api', 'trolls.json');
+const DATA_FILE = path.join(process.cwd(), 'data', 'trolls.json');
+
+// Asegurar que el directorio data existe
+function ensureDataDirectory() {
+  const dataDir = path.join(process.cwd(), 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+}
 
 function loadTrolls() {
   try {
+    ensureDataDirectory();
     console.log('Intentando cargar trolls desde:', DATA_FILE);
     if (fs.existsSync(DATA_FILE)) {
       const data = fs.readFileSync(DATA_FILE, 'utf-8');
       console.log('Archivo leído correctamente');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
     } else {
       console.log('Archivo no existe, creando uno nuevo');
+      // Crear archivo vacío
+      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf-8');
     }
   } catch (e) {
     console.error('Error leyendo trolls.json:', e);
@@ -22,8 +34,10 @@ function loadTrolls() {
 
 function saveTrolls(trolls) {
   try {
+    ensureDataDirectory();
     console.log('Intentando guardar trolls en:', DATA_FILE);
-    fs.writeFileSync(DATA_FILE, JSON.stringify(trolls, null, 2), 'utf-8');
+    const dataToSave = Array.isArray(trolls) ? trolls : [];
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
     console.log('Archivo guardado correctamente');
     return true;
   } catch (e) {
@@ -33,7 +47,8 @@ function saveTrolls(trolls) {
 }
 
 function getNextId(trolls) {
-  return trolls.length > 0 ? Math.max(...trolls.map(t => t.id)) + 1 : 1;
+  if (!Array.isArray(trolls) || trolls.length === 0) return 1;
+  return Math.max(...trolls.map(t => t.id || 0)) + 1;
 }
 
 export default function handler(req, res) {
@@ -57,11 +72,11 @@ export default function handler(req, res) {
       
       const newTroll = {
         id: getNextId(trollList),
-        nick: nick.trim(),
-        steamId: steamId.trim(),
-        steamId64: (steamId64 || 'No resuelto').trim(),
-        reason: (reason || 'Sin razón especificada').trim(),
-        faceitUrl: (faceitUrl || '').trim(),
+        nick: String(nick).trim(),
+        steamId: String(steamId).trim(),
+        steamId64: String(steamId64 || 'No resuelto').trim(),
+        reason: String(reason || 'Sin razón especificada').trim(),
+        faceitUrl: String(faceitUrl || '').trim(),
         dateAdded: new Date().toISOString()
       };
       
@@ -94,11 +109,11 @@ export default function handler(req, res) {
       
       trollList[trollIndex] = {
         ...trollList[trollIndex],
-        nick: nick.trim(),
-        steamId: steamId.trim(),
-        steamId64: (steamId64 || 'No resuelto').trim(),
-        reason: (reason || 'Sin razón especificada').trim(),
-        faceitUrl: (faceitUrl || '').trim(),
+        nick: String(nick).trim(),
+        steamId: String(steamId).trim(),
+        steamId64: String(steamId64 || 'No resuelto').trim(),
+        reason: String(reason || 'Sin razón especificada').trim(),
+        faceitUrl: String(faceitUrl || '').trim(),
         lastModified: new Date().toISOString()
       };
       
@@ -130,6 +145,9 @@ export default function handler(req, res) {
     }
   } catch (error) {
     console.error('Error en API trolls:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      details: error.message 
+    });
   }
 }

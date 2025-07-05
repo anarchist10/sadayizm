@@ -9,7 +9,7 @@ const nicks = [
   { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
   { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
@@ -34,14 +34,14 @@ function parseElo(rawElo) {
   return 0;
 }
 
-// Función para hacer fetch con retry y timeout
-async function fetchEloWithRetry(nick, maxRetries = 3) {
+// Función optimizada para hacer fetch con retry y timeout más corto
+async function fetchEloWithRetry(nick, maxRetries = 2) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Fetching ELO for ${nick.name} (attempt ${attempt})`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // Reducido a 5 segundos
       
       const response = await fetch(nick.faceitApi, {
         signal: controller.signal,
@@ -73,8 +73,8 @@ async function fetchEloWithRetry(nick, maxRetries = 3) {
         return 'N/A';
       }
       
-      // Esperar antes del siguiente intento
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      // Esperar menos tiempo antes del siguiente intento
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
     }
   }
 }
@@ -113,9 +113,10 @@ export default function Home() {
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
   const [loadingTrolls, setLoadingTrolls] = useState(false);
-  const [activeTab, setActiveTab] = useState(null); // Cambio: null por defecto para ocultar
-  const [showTools, setShowTools] = useState(false); // Nuevo estado para mostrar/ocultar herramientas
-  const [editingTroll, setEditingTroll] = useState(null); // Estado para el troll que se está editando
+  const [activeTab, setActiveTab] = useState(null);
+  const [showTools, setShowTools] = useState(false);
+  const [editingTroll, setEditingTroll] = useState(null);
+  const [addingTroll, setAddingTroll] = useState(false); // Nuevo estado para loading del botón
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -158,12 +159,14 @@ export default function Home() {
       const response = await fetch('/api/trolls');
       if (response.ok) {
         const data = await response.json();
-        setTrollList(data);
+        setTrollList(Array.isArray(data) ? data : []);
       } else {
         console.error('Error loading troll list:', response.statusText);
+        setTrollList([]);
       }
     } catch (error) {
       console.error('Error loading troll list:', error);
+      setTrollList([]);
     }
     setLoadingTrolls(false);
   };
@@ -171,6 +174,7 @@ export default function Home() {
   // Agregar troll a la base de datos
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
+      setAddingTroll(true);
       const troll = {
         nick: newTroll.nick.trim(),
         steamId: newTroll.steamId.trim(),
@@ -180,6 +184,7 @@ export default function Home() {
       };
       
       try {
+        console.log('Enviando troll:', troll);
         const response = await fetch('/api/trolls', {
           method: 'POST',
           headers: {
@@ -188,17 +193,22 @@ export default function Home() {
           body: JSON.stringify(troll),
         });
 
+        const responseData = await response.json();
+        console.log('Respuesta del servidor:', responseData);
+
         if (response.ok) {
-          const newTrollData = await response.json();
-          setTrollList(prev => [...prev, newTrollData]);
+          setTrollList(prev => [...prev, responseData]);
           setNewTroll({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
+          console.log('Troll agregado exitosamente');
         } else {
-          console.error('Error adding troll:', response.statusText);
-          alert('Error al agregar el troll. Inténtalo de nuevo.');
+          console.error('Error adding troll:', response.status, responseData);
+          alert(`Error al agregar el troll: ${responseData.error || 'Error desconocido'}`);
         }
       } catch (error) {
         console.error('Error adding troll:', error);
-        alert('Error de conexión. Inténtalo de nuevo.');
+        alert('Error de conexión. Verifica que el servidor esté funcionando.');
+      } finally {
+        setAddingTroll(false);
       }
     }
   };
@@ -228,8 +238,9 @@ export default function Home() {
           ));
           setEditingTroll(null);
         } else {
-          console.error('Error updating troll:', response.statusText);
-          alert('Error al actualizar el troll. Inténtalo de nuevo.');
+          const errorData = await response.json();
+          console.error('Error updating troll:', response.statusText, errorData);
+          alert(`Error al actualizar el troll: ${errorData.error || 'Error desconocido'}`);
         }
       } catch (error) {
         console.error('Error updating troll:', error);
@@ -248,8 +259,9 @@ export default function Home() {
       if (response.ok) {
         setTrollList(prev => prev.filter(troll => troll.id !== trollId));
       } else {
-        console.error('Error removing troll:', response.statusText);
-        alert('Error al eliminar el troll. Inténtalo de nuevo.');
+        const errorData = await response.json();
+        console.error('Error removing troll:', response.statusText, errorData);
+        alert(`Error al eliminar el troll: ${errorData.error || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error('Error removing troll:', error);
@@ -274,23 +286,35 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Función para cargar ELOs de forma secuencial (evita sobrecargar la API)
+    // Función optimizada para cargar ELOs con carga paralela limitada
     async function loadElos() {
       setLoadingElos(true);
       const eloResults = {};
       
-      for (const nick of nicks) {
-        if (nick.faceitApi) {
-          // Pequeña pausa entre requests para no sobrecargar la API
-          if (Object.keys(eloResults).length > 0) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-          
+      // Procesar en lotes de 3 para no sobrecargar la API
+      const batchSize = 3;
+      const nicksWithApi = nicks.filter(nick => nick.faceitApi);
+      
+      for (let i = 0; i < nicksWithApi.length; i += batchSize) {
+        const batch = nicksWithApi.slice(i, i + batchSize);
+        
+        // Procesar el lote en paralelo
+        const batchPromises = batch.map(async (nick) => {
           const elo = await fetchEloWithRetry(nick);
-          eloResults[nick.name] = elo;
-          
-          // Actualizar estado inmediatamente para mostrar progreso
-          setElos(prev => ({ ...prev, [nick.name]: elo }));
+          return { name: nick.name, elo };
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        
+        // Actualizar estado con los resultados del lote
+        batchResults.forEach(({ name, elo }) => {
+          eloResults[name] = elo;
+          setElos(prev => ({ ...prev, [name]: elo }));
+        });
+        
+        // Pequeña pausa entre lotes
+        if (i + batchSize < nicksWithApi.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
       
@@ -302,7 +326,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (Object.keys(elos).length === nicks.length) {
+    if (Object.keys(elos).length === nicks.filter(n => n.faceitApi).length) {
       const nicksWithElo = nicks.map(nick => ({
         ...nick,
         elo: elos[nick.name] === 'N/A' ? 0 : elos[nick.name]
@@ -491,9 +515,9 @@ export default function Home() {
                         <button 
                           className="add-troll-btn"
                           onClick={addTroll}
-                          disabled={!newTroll.nick.trim() || !newTroll.steamId.trim()}
+                          disabled={!newTroll.nick.trim() || !newTroll.steamId.trim() || addingTroll}
                         >
-                          Agregar Troll
+                          {addingTroll ? '⏳ Agregando...' : 'Agregar Troll'}
                         </button>
                       )}
                     </div>
@@ -694,7 +718,7 @@ export default function Home() {
         <div className="gothic-title">sadayizm</div>
         {loadingElos && (
           <div style={{ color: '#ffd700', fontSize: '1rem', marginBottom: '1rem' }}>
-            Cargando ELOs...
+            Cargando ELOs... ({Object.keys(elos).length}/{nicks.filter(n => n.faceitApi).length})
           </div>
         )}
         <div className="nick-list">
