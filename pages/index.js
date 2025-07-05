@@ -9,7 +9,7 @@ const nicks = [
   { name: 'rks', url: 'https://steamcommunity.com/id/5t9/', faceitApi: 'https://api.jakobkristensen.com/76561198023120655/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/bendecido' },
   { name: 'angry', url: 'https://steamcommunity.com/id/69qui9uwjr9qjq9124u1925u15/', faceitApi: 'https://api.jakobkristensen.com/76561198131602113/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/oilrigplayer' },
   { name: 'Supr3me', url: 'https://steamcommunity.com/id/Supr3me76561198063990435/', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/Supr3me' },
-  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561199108305712/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
+  { name: 'daker', url: 'https://steamcommunity.com/id/pierdotodo', faceitApi: 'https://api.jakobkristensen.com/76561198063990435/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/daker' },
   { name: 'ElComba', url: 'https://steamcommunity.com/id/combademon666', faceitApi: 'https://api.jakobkristensen.com/76561199027855096/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/BRBRCOMBAPIM', videoId: 'RMwxJXrgksw' },
   { name: 'Gordoreally', url: 'https://steamcommunity.com/id/lilitacarriooo/', faceitApi: 'https://api.jakobkristensen.com/76561198318387050/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/GordoReally' },
   { name: 'diego2570', url: 'https://steamcommunity.com/id/257O/', faceitApi: 'https://api.jakobkristensen.com/76561198999382443/{{elo}}[[America/Argentina/Buenos_Aires]]', faceitUrl: 'https://www.faceit.com/es/players/goa1221' },
@@ -215,7 +215,7 @@ export default function Home() {
 
   // Editar troll existente
   const updateTroll = async () => {
-    if (editingTroll && editingTroll.nick.trim() && editingTroll.steamId.trim()) {
+    if (editingTroll && editingTroll.nick.trim() && editingTroll.steam_id.trim()) {
       try {
         const response = await fetch(`/api/trolls?id=${editingTroll.id}`, {
           method: 'PUT',
@@ -224,10 +224,10 @@ export default function Home() {
           },
           body: JSON.stringify({
             nick: editingTroll.nick.trim(),
-            steamId: editingTroll.steamId.trim(),
-            steamId64: editingTroll.steamId64.trim() || 'No especificado',
+            steamId: editingTroll.steam_id.trim(),
+            steamId64: editingTroll.steam_id64.trim() || 'No especificado',
             reason: editingTroll.reason.trim() || 'Sin razón especificada',
-            faceitUrl: editingTroll.faceitUrl.trim() || ''
+            faceitUrl: editingTroll.faceit_url.trim() || ''
           }),
         });
 
@@ -457,9 +457,9 @@ export default function Home() {
                     <input
                       type="text"
                       placeholder="Steam ID o URL de Steam"
-                      value={editingTroll ? editingTroll.steamId : newTroll.steamId}
+                      value={editingTroll ? editingTroll.steam_id : newTroll.steamId}
                       onChange={(e) => editingTroll 
-                        ? setEditingTroll({...editingTroll, steamId: e.target.value})
+                        ? setEditingTroll({...editingTroll, steam_id: e.target.value})
                         : setNewTroll({...newTroll, steamId: e.target.value})
                       }
                       className="troll-input"
@@ -467,9 +467,9 @@ export default function Home() {
                     <input
                       type="text"
                       placeholder="Steam ID64 (opcional - búscalo en las herramientas →)"
-                      value={editingTroll ? editingTroll.steamId64 : newTroll.steamId64}
+                      value={editingTroll ? editingTroll.steam_id64 : newTroll.steamId64}
                       onChange={(e) => editingTroll 
-                        ? setEditingTroll({...editingTroll, steamId64: e.target.value})
+                        ? setEditingTroll({...editingTroll, steam_id64: e.target.value})
                         : setNewTroll({...newTroll, steamId64: e.target.value})
                       }
                       className="troll-input"
@@ -477,9 +477,9 @@ export default function Home() {
                     <input
                       type="text"
                       placeholder="URL de Faceit (opcional - búscalo en las herramientas →)"
-                      value={editingTroll ? editingTroll.faceitUrl : newTroll.faceitUrl}
+                      value={editingTroll ? editingTroll.faceit_url : newTroll.faceitUrl}
                       onChange={(e) => editingTroll 
-                        ? setEditingTroll({...editingTroll, faceitUrl: e.target.value})
+                        ? setEditingTroll({...editingTroll, faceit_url: e.target.value})
                         : setNewTroll({...newTroll, faceitUrl: e.target.value})
                       }
                       className="troll-input"
@@ -500,7 +500,7 @@ export default function Home() {
                           <button 
                             className="add-troll-btn update-btn"
                             onClick={updateTroll}
-                            disabled={!editingTroll.nick.trim() || !editingTroll.steamId.trim()}
+                            disabled={!editingTroll.nick.trim() || !editingTroll.steam_id.trim()}
                           >
                             💾 Guardar Cambios
                           </button>
@@ -539,27 +539,27 @@ export default function Home() {
                             <div className="troll-nick">{troll.nick}</div>
                             <div className="troll-details">
                               <div className="troll-steamid">
-                                <strong>Steam ID:</strong> {troll.steamId}
+                                <strong>Steam ID:</strong> {troll.steam_id}
                               </div>
-                              {troll.steamId64 && troll.steamId64 !== 'No especificado' && troll.steamId64 !== 'No resuelto' && (
+                              {troll.steam_id64 && troll.steam_id64 !== 'No especificado' && troll.steam_id64 !== 'No resuelto' && (
                                 <div className="troll-steamid64">
-                                  <strong>Steam ID64:</strong> {troll.steamId64}
+                                  <strong>Steam ID64:</strong> {troll.steam_id64}
                                 </div>
                               )}
-                              {troll.faceitUrl && troll.faceitUrl !== '' && (
+                              {troll.faceit_url && troll.faceit_url !== '' && (
                                 <div className="troll-faceit-url">
-                                  <strong>Faceit:</strong> <a href={troll.faceitUrl} target="_blank" rel="noopener noreferrer" className="faceit-link">{troll.faceitUrl}</a>
+                                  <strong>Faceit:</strong> <a href={troll.faceit_url} target="_blank" rel="noopener noreferrer" className="faceit-link">{troll.faceit_url}</a>
                                 </div>
                               )}
                               <div className="troll-date">
-                                <strong>Agregado:</strong> {new Date(troll.dateAdded).toLocaleDateString('es-AR')}
+                                <strong>Agregado:</strong> {new Date(troll.date_added).toLocaleDateString('es-AR')}
                               </div>
                             </div>
                             <div className="troll-reason">"{troll.reason}"</div>
                           </div>
                           <div className="troll-actions">
                             <a
-                              href={generateSteamUrl(troll.steamId, troll.steamId64)}
+                              href={generateSteamUrl(troll.steam_id, troll.steam_id64)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="steam-btn"
@@ -574,7 +574,7 @@ export default function Home() {
                               />
                             </a>
                             <a
-                              href={`https://faceitfinder.com/profile/${troll.steamId64 || troll.steamId}`}
+                              href={`https://faceitfinder.com/profile/${troll.steam_id64 || troll.steam_id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="faceit-finder-btn"
@@ -584,9 +584,9 @@ export default function Home() {
                                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#88ccff"/>
                               </svg>
                             </a>
-                            {troll.faceitUrl && troll.faceitUrl !== '' && (
+                            {troll.faceit_url && troll.faceit_url !== '' && (
                               <a
-                                href={troll.faceitUrl}
+                                href={troll.faceit_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="faceit-profile-btn"

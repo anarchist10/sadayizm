@@ -1,78 +1,17 @@
-// API para manejar la lista de trolls con persistencia en archivo JSON
-import fs from 'fs';
-import path from 'path';
+// API para manejar la lista de trolls con Supabase
+import { createClient } from '@supabase/supabase-js'
 
-const DATA_FILE = path.join(process.cwd(), 'pages', 'api', 'trolls.json');
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-function loadTrolls() {
-  try {
-    console.log('📂 Intentando cargar trolls desde:', DATA_FILE);
-    
-    if (fs.existsSync(DATA_FILE)) {
-      const data = fs.readFileSync(DATA_FILE, 'utf-8');
-      console.log('✅ Archivo leído correctamente');
-      
-      if (!data.trim()) {
-        console.log('📝 Archivo vacío, inicializando con array vacío');
-        const emptyArray = [];
-        fs.writeFileSync(DATA_FILE, JSON.stringify(emptyArray, null, 2), 'utf-8');
-        return emptyArray;
-      }
-      
-      const parsed = JSON.parse(data);
-      const result = Array.isArray(parsed) ? parsed : [];
-      console.log('📊 Trolls cargados:', result.length);
-      return result;
-    } else {
-      console.log('🆕 Archivo no existe, creando uno nuevo');
-      const emptyArray = [];
-      fs.writeFileSync(DATA_FILE, JSON.stringify(emptyArray, null, 2), 'utf-8');
-      console.log('✅ Archivo vacío creado');
-      return emptyArray;
-    }
-  } catch (e) {
-    console.error('❌ Error leyendo trolls.json:', e);
-    console.error('Stack trace:', e.stack);
-    return [];
-  }
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase environment variables')
 }
 
-function saveTrolls(trolls) {
-  try {
-    console.log('💾 Intentando guardar trolls en:', DATA_FILE);
-    console.log('📊 Número de trolls a guardar:', trolls.length);
-    
-    const dataToSave = Array.isArray(trolls) ? trolls : [];
-    const jsonString = JSON.stringify(dataToSave, null, 2);
-    
-    // Escribir el archivo
-    fs.writeFileSync(DATA_FILE, jsonString, 'utf-8');
-    console.log('✅ Archivo guardado correctamente');
-    
-    // Verificar que se guardó correctamente
-    if (fs.existsSync(DATA_FILE)) {
-      const savedData = fs.readFileSync(DATA_FILE, 'utf-8');
-      const parsedSaved = JSON.parse(savedData);
-      console.log('✅ Verificación: archivo contiene', parsedSaved.length, 'trolls');
-      return true;
-    } else {
-      console.error('❌ Error: el archivo no existe después de guardarlo');
-      return false;
-    }
-  } catch (e) {
-    console.error('❌ Error guardando trolls.json:', e);
-    console.error('Stack trace:', e.stack);
-    return false;
-  }
-}
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-function getNextId(trolls) {
-  if (!Array.isArray(trolls) || trolls.length === 0) return 1;
-  return Math.max(...trolls.map(t => t.id || 0)) + 1;
-}
-
-export default function handler(req, res) {
-  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS ===');
+export default async function handler(req, res) {
+  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (SUPABASE) ===');
   console.log('📋 Método:', req.method);
   console.log('🌐 URL:', req.url);
   console.log('⏰ Timestamp:', new Date().toISOString());
@@ -88,13 +27,24 @@ export default function handler(req, res) {
   }
   
   try {
-    let trollList = loadTrolls();
-    console.log('📊 Trolls cargados en handler:', trollList.length);
-
     if (req.method === 'GET') {
       console.log('📖 Procesando GET request');
-      console.log('📤 Enviando', trollList.length, 'trolls');
-      res.status(200).json(trollList);
+      
+      const { data: trolls, error } = await supabase
+        .from('trolls')
+        .select('*')
+        .order('date_added', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Error al obtener trolls:', error);
+        return res.status(500).json({ 
+          error: 'Error al obtener la lista de trolls',
+          details: error.message 
+        });
+      }
+      
+      console.log('📤 Enviando', trolls?.length || 0, 'trolls');
+      res.status(200).json(trolls || []);
       
     } else if (req.method === 'POST') {
       console.log('➕ Procesando POST request');
@@ -113,98 +63,98 @@ export default function handler(req, res) {
       }
       
       const newTroll = {
-        id: getNextId(trollList),
         nick: String(nick).trim(),
-        steamId: String(steamId).trim(),
-        steamId64: String(steamId64 || 'No resuelto').trim(),
+        steam_id: String(steamId).trim(),
+        steam_id64: String(steamId64 || 'No resuelto').trim(),
         reason: String(reason || 'Sin razón especificada').trim(),
-        faceitUrl: String(faceitUrl || '').trim(),
-        dateAdded: new Date().toISOString()
+        faceit_url: String(faceitUrl || '').trim(),
       };
       
-      console.log('🆕 Nuevo troll creado:', JSON.stringify(newTroll, null, 2));
+      console.log('🆕 Nuevo troll a insertar:', JSON.stringify(newTroll, null, 2));
       
-      trollList.push(newTroll);
-      console.log('📊 Lista actualizada, total trolls:', trollList.length);
+      const { data: insertedTroll, error } = await supabase
+        .from('trolls')
+        .insert([newTroll])
+        .select()
+        .single();
       
-      console.log('💾 Intentando guardar...');
-      const saveResult = saveTrolls(trollList);
-      console.log('📋 Resultado del guardado:', saveResult);
-      
-      if (saveResult) {
-        console.log('✅ Troll guardado exitosamente');
-        res.status(201).json(newTroll);
-      } else {
-        console.log('❌ Error al guardar trolls');
-        res.status(500).json({ 
-          error: 'Error al guardar en el servidor - problema de permisos',
-          details: 'No se pudo escribir en el archivo de datos',
-          file: DATA_FILE
+      if (error) {
+        console.error('❌ Error al insertar troll:', error);
+        return res.status(500).json({ 
+          error: 'Error al guardar el troll en la base de datos',
+          details: error.message 
         });
       }
+      
+      console.log('✅ Troll insertado exitosamente:', insertedTroll);
+      res.status(201).json(insertedTroll);
       
     } else if (req.method === 'PUT') {
       console.log('✏️ Procesando PUT request');
       const { id } = req.query;
       const { nick, steamId, steamId64, reason, faceitUrl } = req.body || {};
-      const trollId = parseInt(id);
       
-      console.log('🔄 Actualizando troll ID:', trollId);
-      
-      const trollIndex = trollList.findIndex(troll => troll.id === trollId);
-      
-      if (trollIndex === -1) {
-        console.log('❌ Troll no encontrado con ID:', trollId);
-        return res.status(404).json({ error: 'Troll no encontrado' });
-      }
+      console.log('🔄 Actualizando troll ID:', id);
       
       if (!nick || !steamId) {
         return res.status(400).json({ error: 'Nick y Steam ID son requeridos' });
       }
       
-      trollList[trollIndex] = {
-        ...trollList[trollIndex],
+      const updateData = {
         nick: String(nick).trim(),
-        steamId: String(steamId).trim(),
-        steamId64: String(steamId64 || 'No resuelto').trim(),
+        steam_id: String(steamId).trim(),
+        steam_id64: String(steamId64 || 'No resuelto').trim(),
         reason: String(reason || 'Sin razón especificada').trim(),
-        faceitUrl: String(faceitUrl || '').trim(),
-        lastModified: new Date().toISOString()
+        faceit_url: String(faceitUrl || '').trim(),
+        last_modified: new Date().toISOString()
       };
       
-      console.log('✏️ Troll actualizado:', JSON.stringify(trollList[trollIndex], null, 2));
+      console.log('✏️ Datos de actualización:', JSON.stringify(updateData, null, 2));
       
-      if (saveTrolls(trollList)) {
-        console.log('✅ Troll actualizado exitosamente');
-        res.status(200).json(trollList[trollIndex]);
-      } else {
-        console.log('❌ Error al guardar actualización');
-        res.status(500).json({ error: 'Error al guardar en el servidor' });
+      const { data: updatedTroll, error } = await supabase
+        .from('trolls')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Error al actualizar troll:', error);
+        return res.status(500).json({ 
+          error: 'Error al actualizar el troll',
+          details: error.message 
+        });
       }
+      
+      if (!updatedTroll) {
+        console.log('❌ Troll no encontrado con ID:', id);
+        return res.status(404).json({ error: 'Troll no encontrado' });
+      }
+      
+      console.log('✅ Troll actualizado exitosamente:', updatedTroll);
+      res.status(200).json(updatedTroll);
       
     } else if (req.method === 'DELETE') {
       console.log('🗑️ Procesando DELETE request');
       const { id } = req.query;
-      const trollId = parseInt(id);
       
-      console.log('🗑️ Eliminando troll ID:', trollId);
+      console.log('🗑️ Eliminando troll ID:', id);
       
-      const initialLength = trollList.length;
-      trollList = trollList.filter(troll => troll.id !== trollId);
+      const { error } = await supabase
+        .from('trolls')
+        .delete()
+        .eq('id', id);
       
-      if (trollList.length < initialLength) {
-        console.log('💾 Troll eliminado, guardando lista actualizada');
-        if (saveTrolls(trollList)) {
-          console.log('✅ Troll eliminado exitosamente');
-          res.status(200).json({ message: 'Troll eliminado' });
-        } else {
-          console.log('❌ Error al guardar después de eliminar');
-          res.status(500).json({ error: 'Error al guardar en el servidor' });
-        }
-      } else {
-        console.log('❌ Troll no encontrado para eliminar');
-        res.status(404).json({ error: 'Troll no encontrado' });
+      if (error) {
+        console.error('❌ Error al eliminar troll:', error);
+        return res.status(500).json({ 
+          error: 'Error al eliminar el troll',
+          details: error.message 
+        });
       }
+      
+      console.log('✅ Troll eliminado exitosamente');
+      res.status(200).json({ message: 'Troll eliminado' });
       
     } else {
       console.log('❌ Método no permitido:', req.method);
