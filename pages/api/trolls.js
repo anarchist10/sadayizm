@@ -32,6 +32,19 @@ export default async function handler(req, res) {
     return;
   }
   
+  // Verificar configuración de Supabase
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ Configuración de Supabase incompleta');
+    return res.status(500).json({ 
+      error: 'Configuración de base de datos incompleta',
+      details: 'Variables de entorno de Supabase no configuradas',
+      missing: {
+        url: !supabaseUrl,
+        key: !supabaseAnonKey
+      }
+    });
+  }
+  
   try {
     // Verificar conexión a Supabase
     console.log('🔗 Verificando conexión a Supabase...');
