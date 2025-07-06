@@ -82,7 +82,7 @@ async function fetchEloWithRetry(nick, maxRetries = 2) {
 // Función para generar URL de Steam correcta
 function generateSteamUrl(steamId, steamId64) {
   // Si steamId ya es una URL completa, usarla directamente
-  if (steamId.startsWith('http')) {
+  if (steamId && steamId.startsWith('http')) {
     return steamId;
   }
   
@@ -92,12 +92,12 @@ function generateSteamUrl(steamId, steamId64) {
   }
   
   // Si steamId parece ser un ID numérico, usar formato de profiles
-  if (/^\d+$/.test(steamId)) {
+  if (steamId && /^\d+$/.test(steamId)) {
     return `https://steamcommunity.com/profiles/${steamId}`;
   }
   
   // Si no, asumir que es un custom ID y usar formato /id/
-  return `https://steamcommunity.com/id/${steamId}`;
+  return `https://steamcommunity.com/id/${steamId || 'unknown'}`;
 }
 
 export default function Home() {
@@ -156,17 +156,30 @@ export default function Home() {
   const loadTrollList = async () => {
     setLoadingTrolls(true);
     try {
-      const response = await fetch('/api/trolls');
+      console.log('🔄 Cargando lista de trolls...');
+      const response = await fetch('/api/trolls', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📋 Datos recibidos:', data);
         setTrollList(Array.isArray(data) ? data : []);
       } else {
-        console.error('Error loading troll list:', response.statusText);
+        const errorText = await response.text();
+        console.error('❌ Error loading troll list:', response.status, response.statusText, errorText);
         setTrollList([]);
+        alert(`Error al cargar la lista: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Error loading troll list:', error);
+      console.error('💥 Error loading troll list:', error);
       setTrollList([]);
+      alert(`Error de conexión: ${error.message}`);
     }
     setLoadingTrolls(false);
   };
@@ -184,7 +197,7 @@ export default function Home() {
       };
       
       try {
-        console.log('Enviando troll:', troll);
+        console.log('📤 Enviando troll:', troll);
         const response = await fetch('/api/trolls', {
           method: 'POST',
           headers: {
@@ -193,20 +206,22 @@ export default function Home() {
           body: JSON.stringify(troll),
         });
 
-        const responseData = await response.json();
-        console.log('Respuesta del servidor:', responseData);
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
         if (response.ok) {
+          const responseData = await response.json();
+          console.log('✅ Respuesta exitosa:', responseData);
           setTrollList(prev => [...prev, responseData]);
           setNewTroll({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
-          console.log('Troll agregado exitosamente');
+          console.log('🎉 Troll agregado exitosamente');
         } else {
-          console.error('Error adding troll:', response.status, responseData);
-          alert(`Error al agregar el troll: ${responseData.error || 'Error desconocido'}`);
+          const errorText = await response.text();
+          console.error('❌ Error adding troll:', response.status, response.statusText, errorText);
+          alert(`Error al agregar el troll: ${response.status} ${response.statusText}\n${errorText}`);
         }
       } catch (error) {
-        console.error('Error adding troll:', error);
-        alert('Error de conexión. Verifica que el servidor esté funcionando.');
+        console.error('💥 Error adding troll:', error);
+        alert(`Error de conexión: ${error.message}`);
       } finally {
         setAddingTroll(false);
       }
@@ -238,9 +253,9 @@ export default function Home() {
           ));
           setEditingTroll(null);
         } else {
-          const errorData = await response.json();
-          console.error('Error updating troll:', response.statusText, errorData);
-          alert(`Error al actualizar el troll: ${errorData.error || 'Error desconocido'}`);
+          const errorText = await response.text();
+          console.error('Error updating troll:', response.statusText, errorText);
+          alert(`Error al actualizar el troll: ${response.status} ${response.statusText}`);
         }
       } catch (error) {
         console.error('Error updating troll:', error);
@@ -259,9 +274,9 @@ export default function Home() {
       if (response.ok) {
         setTrollList(prev => prev.filter(troll => troll.id !== trollId));
       } else {
-        const errorData = await response.json();
-        console.error('Error removing troll:', response.statusText, errorData);
-        alert(`Error al eliminar el troll: ${errorData.error || 'Error desconocido'}`);
+        const errorText = await response.text();
+        console.error('Error removing troll:', response.statusText, errorText);
+        alert(`Error al eliminar el troll: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error removing troll:', error);
