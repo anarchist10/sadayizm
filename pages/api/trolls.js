@@ -4,8 +4,14 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+console.log('🔍 Verificando configuración de Supabase:');
+console.log('URL:', supabaseUrl ? '✅ Configurada' : '❌ Faltante');
+console.log('Anon Key:', supabaseAnonKey ? '✅ Configurada' : '❌ Faltante');
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing Supabase environment variables')
+  console.error('URL:', supabaseUrl)
+  console.error('Key:', supabaseAnonKey ? 'Present' : 'Missing')
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -27,6 +33,9 @@ export default async function handler(req, res) {
   }
   
   try {
+    // Verificar conexión a Supabase
+    console.log('🔗 Verificando conexión a Supabase...');
+    
     if (req.method === 'GET') {
       console.log('📖 Procesando GET request');
       
@@ -39,7 +48,8 @@ export default async function handler(req, res) {
         console.error('❌ Error al obtener trolls:', error);
         return res.status(500).json({ 
           error: 'Error al obtener la lista de trolls',
-          details: error.message 
+          details: error.message,
+          supabaseError: error
         });
       }
       
@@ -72,6 +82,23 @@ export default async function handler(req, res) {
       
       console.log('🆕 Nuevo troll a insertar:', JSON.stringify(newTroll, null, 2));
       
+      // Test de conexión antes de insertar
+      const { data: testConnection, error: connectionError } = await supabase
+        .from('trolls')
+        .select('count')
+        .limit(1);
+      
+      if (connectionError) {
+        console.error('❌ Error de conexión a Supabase:', connectionError);
+        return res.status(500).json({ 
+          error: 'Error de conexión a la base de datos',
+          details: connectionError.message,
+          supabaseError: connectionError
+        });
+      }
+      
+      console.log('✅ Conexión a Supabase exitosa');
+      
       const { data: insertedTroll, error } = await supabase
         .from('trolls')
         .insert([newTroll])
@@ -82,7 +109,8 @@ export default async function handler(req, res) {
         console.error('❌ Error al insertar troll:', error);
         return res.status(500).json({ 
           error: 'Error al guardar el troll en la base de datos',
-          details: error.message 
+          details: error.message,
+          supabaseError: error
         });
       }
       
@@ -122,7 +150,8 @@ export default async function handler(req, res) {
         console.error('❌ Error al actualizar troll:', error);
         return res.status(500).json({ 
           error: 'Error al actualizar el troll',
-          details: error.message 
+          details: error.message,
+          supabaseError: error
         });
       }
       
@@ -149,7 +178,8 @@ export default async function handler(req, res) {
         console.error('❌ Error al eliminar troll:', error);
         return res.status(500).json({ 
           error: 'Error al eliminar el troll',
-          details: error.message 
+          details: error.message,
+          supabaseError: error
         });
       }
       
