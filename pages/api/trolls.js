@@ -1,11 +1,16 @@
-// API para manejar la lista de trolls con SQLite
-import { trollsDB } from '../../lib/database';
+// API para manejar la lista de trolls con Supabase
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 export default async function handler(req, res) {
-  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (SQLite) ===');
+  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (SUPABASE) ===');
   console.log('📋 Método:', req.method);
   console.log('🌐 URL:', req.url);
   console.log('⏰ Timestamp:', new Date().toISOString());
+  console.log('🔧 Supabase URL:', supabaseUrl ? 'CONFIGURADA' : 'NO CONFIGURADA');
+  console.log('🔑 Supabase Key:', supabaseAnonKey ? 'CONFIGURADA' : 'NO CONFIGURADA');
   
   // Configurar headers CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,12 +21,39 @@ export default async function handler(req, res) {
     res.status(200).end();
     return;
   }
+
+  // Verificar configuración de Supabase
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ Variables de entorno de Supabase no configuradas');
+    return res.status(500).json({ 
+      error: 'Configuración de base de datos no disponible',
+      details: 'Variables de entorno de Supabase no configuradas',
+      config: {
+        url: !!supabaseUrl,
+        key: !!supabaseAnonKey
+      }
+    });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
   
   try {
     if (req.method === 'GET') {
       console.log('📖 Procesando GET request');
       
-      const trolls = trollsDB.getAll();
+      const { data: trolls, error } = await supabase
+        .from('trolls')
+        .select('*')
+        .order('date_added', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Error al obtener trolls:', error);
+        return res.status(500).json({ 
+          error: 'Error al obtener la lista de trolls',
+          details: error.message,
+          code: error.code
+        });
+      }
       
       console.log('📤 Enviando', trolls?.length || 0, 'trolls');
       res.status(200).json(trolls || []);
@@ -44,15 +76,28 @@ export default async function handler(req, res) {
       
       const newTroll = {
         nick: String(nick).trim(),
-        steamId: String(steamId).trim(),
-        steamId64: String(steamId64 || 'No resuelto').trim(),
+        steam_id: String(steamId).trim(),
+        steam_id64: String(steamId64 || 'No resuelto').trim(),
         reason: String(reason || 'Sin razón especificada').trim(),
-        faceitUrl: String(faceitUrl || '').trim(),
+        faceit_url: String(faceitUrl || '').trim(),
       };
       
       console.log('🆕 Nuevo troll a insertar:', JSON.stringify(newTroll, null, 2));
       
-      const insertedTroll = trollsDB.add(newTroll);
+      const { data: insertedTroll, error } = await supabase
+        .from('trolls')
+        .insert([newTroll])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Error al insertar troll:', error);
+        return res.status(500).json({ 
+          error: 'Error al guardar el troll en la base de datos',
+          details: error.message,
+          code: error.code
+        });
+      }
       
       console.log('✅ Troll insertado exitosamente:', insertedTroll);
       res.status(201).json(insertedTroll);
@@ -70,15 +115,30 @@ export default async function handler(req, res) {
       
       const updateData = {
         nick: String(nick).trim(),
-        steamId: String(steamId).trim(),
-        steamId64: String(steamId64 || 'No resuelto').trim(),
+        steam_id: String(steamId).trim(),
+        steam_id64: String(steamId64 || 'No resuelto').trim(),
         reason: String(reason || 'Sin razón especificada').trim(),
-        faceitUrl: String(faceitUrl || '').trim(),
+        faceit_url: String(faceitUrl || '').trim(),
+        last_modified: new Date().toISOString()
       };
       
       console.log('✏️ Datos de actualización:', JSON.stringify(updateData, null, 2));
       
-      const updatedTroll = trollsDB.update(id, updateData);
+      const { data: updatedTroll, error } = await supabase
+        .from('trolls')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Error al actualizar troll:', error);
+        return res.status(500).json({ 
+          error: 'Error al actualizar el troll',
+          details: error.message,
+          code: error.code
+        });
+      }
       
       if (!updatedTroll) {
         console.log('❌ Troll no encontrado con ID:', id);
@@ -94,11 +154,18 @@ export default async function handler(req, res) {
       
       console.log('🗑️ Eliminando troll ID:', id);
       
-      const deleted = trollsDB.delete(id);
+      const { error } = await supabase
+        .from('trolls')
+        .delete()
+        .eq('id', id);
       
-      if (!deleted) {
-        console.log('❌ Troll no encontrado con ID:', id);
-        return res.status(404).json({ error: 'Troll no encontrado' });
+      if (error) {
+        console.error('❌ Error al eliminar troll:', error);
+        return res.status(500).json({ 
+          error: 'Error al eliminar el troll',
+          details: error.message,
+          code: error.code
+        });
       }
       
       console.log('✅ Troll eliminado exitosamente');
@@ -120,7 +187,11 @@ export default async function handler(req, res) {
       error: 'Error interno del servidor',
       details: error.message,
       method: req.method,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      supabaseConfig: {
+        url: !!supabaseUrl,
+        key: !!supabaseAnonKey
+      }
     });
   }
   
