@@ -56,13 +56,6 @@ async function fetchEloWithRetry(nick, maxRetries = 2) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      // Check if the response is JSON before trying to parse it
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        throw new Error(`Non-JSON response: ${textResponse}`);
-      }
-      
       const data = await response.json();
       console.log(`${nick.name} API response:`, data);
       
