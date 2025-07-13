@@ -19,15 +19,30 @@ export default async function handler(req, res) {
   
   try {
     // Inicializar la base de datos si es necesario
-    await trollsDB.init();
+    try {
+      await trollsDB.init();
+    } catch (initError) {
+      console.error('❌ Error inicializando base de datos:', initError);
+      return res.status(500).json({ 
+        error: 'Error inicializando base de datos',
+        details: initError.message 
+      });
+    }
     
     if (req.method === 'GET') {
       console.log('📖 Procesando GET request');
       
-      const trolls = await trollsDB.getAll();
-      
-      console.log('📤 Enviando', trolls?.length || 0, 'trolls');
-      res.status(200).json(trolls || []);
+      try {
+        const trolls = await trollsDB.getAll();
+        console.log('📤 Enviando', trolls?.length || 0, 'trolls');
+        res.status(200).json(trolls || []);
+      } catch (getError) {
+        console.error('❌ Error obteniendo trolls:', getError);
+        res.status(500).json({ 
+          error: 'Error obteniendo lista de trolls',
+          details: getError.message 
+        });
+      }
       
     } else if (req.method === 'POST') {
       console.log('➕ Procesando POST request');
