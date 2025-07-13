@@ -1,22 +1,25 @@
-// Endpoint de diagnóstico para verificar la base de datos SQLite
+// Endpoint de diagnóstico para verificar la base de datos libsql
 import { trollsDB } from '../../lib/database';
 
 export default async function handler(req, res) {
-  console.log('🔍 === DIAGNÓSTICO DE BASE DE DATOS SQLite ===');
+  console.log('🔍 === DIAGNÓSTICO DE BASE DE DATOS libsql ===');
   
   const diagnostics = {
     timestamp: new Date().toISOString(),
     database: {
-      type: 'SQLite',
+      type: 'libsql',
       status: 'UNKNOWN'
     },
     tests: []
   };
   
   try {
+    // Inicializar la base de datos
+    await trollsDB.init();
+    
     // Test 1: Obtener todos los trolls
     console.log('📋 Test 1: Obtener todos los trolls...');
-    const allTrolls = trollsDB.getAll();
+    const allTrolls = await trollsDB.getAll();
     diagnostics.tests.push({
       name: 'GET_ALL_TROLLS',
       status: 'SUCCESS',
@@ -34,7 +37,7 @@ export default async function handler(req, res) {
       faceitUrl: 'https://faceit.com/test'
     };
     
-    const insertedTroll = trollsDB.add(testTroll);
+    const insertedTroll = await trollsDB.add(testTroll);
     diagnostics.tests.push({
       name: 'INSERT_TROLL',
       status: 'SUCCESS',
@@ -44,7 +47,7 @@ export default async function handler(req, res) {
     
     // Test 3: Actualizar el troll de prueba
     console.log('✏️ Test 3: Actualizar troll de prueba...');
-    const updatedTroll = trollsDB.update(insertedTroll.id, {
+    const updatedTroll = await trollsDB.update(insertedTroll.id, {
       ...testTroll,
       reason: 'Test actualizado - ' + new Date().toISOString()
     });
@@ -58,7 +61,7 @@ export default async function handler(req, res) {
     
     // Test 4: Eliminar el troll de prueba
     console.log('🗑️ Test 4: Eliminar troll de prueba...');
-    const deleted = trollsDB.delete(insertedTroll.id);
+    const deleted = await trollsDB.delete(insertedTroll.id);
     diagnostics.tests.push({
       name: 'DELETE_TROLL',
       status: deleted ? 'SUCCESS' : 'FAILED',
@@ -66,7 +69,7 @@ export default async function handler(req, res) {
     });
     
     diagnostics.database.status = 'SUCCESS';
-    diagnostics.summary = 'Todos los tests pasaron correctamente. La base de datos SQLite está funcionando perfectamente.';
+    diagnostics.summary = 'Todos los tests pasaron correctamente. La base de datos libsql está funcionando perfectamente.';
     
   } catch (error) {
     console.error('💥 Error en diagnóstico:', error);
@@ -75,7 +78,7 @@ export default async function handler(req, res) {
       message: error.message,
       stack: error.stack
     };
-    diagnostics.summary = 'Error en la base de datos SQLite.';
+    diagnostics.summary = 'Error en la base de datos libsql.';
   }
   
   console.log('📊 Diagnóstico completo:', diagnostics);

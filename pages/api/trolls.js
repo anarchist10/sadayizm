@@ -1,8 +1,8 @@
-// API para manejar la lista de trolls con SQLite
+// API para manejar la lista de trolls con libsql
 import { trollsDB } from '../../lib/database';
 
 export default async function handler(req, res) {
-  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (SQLite) ===');
+  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (libsql) ===');
   console.log('📋 Método:', req.method);
   console.log('🌐 URL:', req.url);
   console.log('⏰ Timestamp:', new Date().toISOString());
@@ -18,10 +18,13 @@ export default async function handler(req, res) {
   }
   
   try {
+    // Inicializar la base de datos si es necesario
+    await trollsDB.init();
+    
     if (req.method === 'GET') {
       console.log('📖 Procesando GET request');
       
-      const trolls = trollsDB.getAll();
+      const trolls = await trollsDB.getAll();
       
       console.log('📤 Enviando', trolls?.length || 0, 'trolls');
       res.status(200).json(trolls || []);
@@ -52,7 +55,7 @@ export default async function handler(req, res) {
       
       console.log('🆕 Nuevo troll a insertar:', JSON.stringify(newTroll, null, 2));
       
-      const insertedTroll = trollsDB.add(newTroll);
+      const insertedTroll = await trollsDB.add(newTroll);
       
       console.log('✅ Troll insertado exitosamente:', insertedTroll);
       res.status(201).json(insertedTroll);
@@ -78,7 +81,7 @@ export default async function handler(req, res) {
       
       console.log('✏️ Datos de actualización:', JSON.stringify(updateData, null, 2));
       
-      const updatedTroll = trollsDB.update(id, updateData);
+      const updatedTroll = await trollsDB.update(id, updateData);
       
       if (!updatedTroll) {
         console.log('❌ Troll no encontrado con ID:', id);
@@ -94,7 +97,7 @@ export default async function handler(req, res) {
       
       console.log('🗑️ Eliminando troll ID:', id);
       
-      const deleted = trollsDB.delete(id);
+      const deleted = await trollsDB.delete(id);
       
       if (!deleted) {
         console.log('❌ Troll no encontrado con ID:', id);
