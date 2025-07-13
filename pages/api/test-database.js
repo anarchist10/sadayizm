@@ -1,13 +1,13 @@
-// Endpoint de diagnóstico para verificar la base de datos libsql
+// Endpoint de diagnóstico para verificar la base de datos JSON
 import { trollsDB } from '../../lib/database';
 
 export default async function handler(req, res) {
-  console.log('🔍 === DIAGNÓSTICO DE BASE DE DATOS libsql ===');
+  console.log('🔍 === DIAGNÓSTICO DE BASE DE DATOS JSON ===');
   
   const diagnostics = {
     timestamp: new Date().toISOString(),
     database: {
-      type: 'libsql',
+      type: 'JSON file-based',
       status: 'UNKNOWN'
     },
     tests: []
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     });
     
     diagnostics.database.status = 'SUCCESS';
-    diagnostics.summary = 'Todos los tests pasaron correctamente. La base de datos libsql está funcionando perfectamente.';
+    diagnostics.summary = 'Todos los tests pasaron correctamente. La base de datos JSON está funcionando perfectamente.';
     
   } catch (error) {
     console.error('💥 Error en diagnóstico:', error);
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       message: error.message,
       stack: error.stack
     };
-    diagnostics.summary = 'Error en la base de datos libsql.';
+    diagnostics.summary = 'Error en la base de datos JSON.';
   }
   
   console.log('📊 Diagnóstico completo:', diagnostics);

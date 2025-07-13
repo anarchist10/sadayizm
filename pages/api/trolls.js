@@ -1,8 +1,8 @@
-// API para manejar la lista de trolls con libsql
+// API para manejar la lista de trolls con JSON
 import { trollsDB } from '../../lib/database';
 
 export default async function handler(req, res) {
-  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (libsql) ===');
+  console.log('\n=== 🚀 NUEVA REQUEST API TROLLS (JSON) ===');
   console.log('📋 Método:', req.method);
   console.log('🌐 URL:', req.url);
   console.log('⏰ Timestamp:', new Date().toISOString());
