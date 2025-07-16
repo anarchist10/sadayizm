@@ -290,10 +290,6 @@ export default function Home() {
         const errorData = await response.json();
         console.error('❌ Error del servidor:', errorData);
         alert(`Error al eliminar el troll: ${response.status} ${response.statusText}\nDetalles: ${errorData.error}`);
-      } else {
-        const errorText = await response.text();
-        console.error('Error removing troll:', response.statusText, errorText);
-        alert(`Error al eliminar el troll: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error removing troll:', error);
