@@ -110,12 +110,24 @@ export default async function handler(req, res) {
       console.log('🗑️ Procesando DELETE request');
       const { id } = req.query;
       
+      console.log('🔍 Query completa:', req.query);
+      console.log('🆔 ID recibido:', id, 'tipo:', typeof id);
+      
       if (!id) {
         console.log('❌ Error: ID no proporcionado para DELETE');
         return res.status(400).json({ error: 'ID es requerido para eliminar' });
       }
       
       console.log('🗑️ Eliminando troll ID:', id);
+      
+      // Verificar que el troll existe antes de intentar eliminarlo
+      const existingTroll = await trollsDB.getById(id);
+      if (!existingTroll) {
+        console.log('❌ Troll no encontrado con ID:', id);
+        const allTrolls = await trollsDB.getAll();
+        console.log('📋 Trolls disponibles:', allTrolls.map(t => ({ id: t.id, nick: t.nick })));
+        return res.status(404).json({ error: 'Troll no encontrado', availableIds: allTrolls.map(t => t.id) });
+      }
       
       const deleted = await trollsDB.delete(id);
       

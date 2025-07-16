@@ -266,6 +266,8 @@ export default function Home() {
 
   // Remover troll de la base de datos
   const removeTroll = async (trollId) => {
+    console.log('🗑️ Frontend: Intentando eliminar troll con ID:', trollId, 'tipo:', typeof trollId);
+    
     if (!confirm('¿Estás seguro de que quieres eliminar este troll?')) {
       return;
     }
@@ -284,6 +286,10 @@ export default function Home() {
       if (response.ok) {
         console.log('✅ Troll eliminado exitosamente');
         setTrollList(prev => prev.filter(troll => troll.id !== trollId));
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Error del servidor:', errorData);
+        alert(`Error al eliminar el troll: ${response.status} ${response.statusText}\nDetalles: ${errorData.error}`);
       } else {
         const errorText = await response.text();
         console.error('Error removing troll:', response.statusText, errorText);
