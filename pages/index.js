@@ -266,12 +266,23 @@ export default function Home() {
 
   // Remover troll de la base de datos
   const removeTroll = async (trollId) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este troll?')) {
+      return;
+    }
+    
     try {
+      console.log('🗑️ Eliminando troll con ID:', trollId);
       const response = await fetch(`/api/trolls?id=${trollId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
+      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+      
       if (response.ok) {
+        console.log('✅ Troll eliminado exitosamente');
         setTrollList(prev => prev.filter(troll => troll.id !== trollId));
       } else {
         const errorText = await response.text();

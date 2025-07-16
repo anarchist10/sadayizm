@@ -110,6 +110,11 @@ export default async function handler(req, res) {
       console.log('🗑️ Procesando DELETE request');
       const { id } = req.query;
       
+      if (!id) {
+        console.log('❌ Error: ID no proporcionado para DELETE');
+        return res.status(400).json({ error: 'ID es requerido para eliminar' });
+      }
+      
       console.log('🗑️ Eliminando troll ID:', id);
       
       const deleted = await trollsDB.delete(id);
