@@ -273,7 +273,7 @@ export default function Home() {
     }
     
     try {
-      console.log('🗑️ Eliminando troll con ID:', trollId);
+      console.log('🗑️ Enviando DELETE request para troll ID:', trollId);
       const response = await fetch(`/api/trolls?id=${trollId}`, {
         method: 'DELETE',
         headers: {
@@ -281,18 +281,23 @@ export default function Home() {
         }
       });
 
-      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+      console.log('📡 DELETE response:', response.status, response.statusText);
       
       if (response.ok) {
-        console.log('✅ Troll eliminado exitosamente');
-        setTrollList(prev => prev.filter(troll => troll.id !== trollId));
+        console.log('✅ Troll eliminado exitosamente del servidor');
+        // Actualizar la lista local filtrando por ID
+        setTrollList(prev => {
+          const filtered = prev.filter(troll => troll.id != trollId);
+          console.log('📋 Lista actualizada, trolls restantes:', filtered.length);
+          return filtered;
+        });
       } else {
         const errorData = await response.json();
-        console.error('❌ Error del servidor:', errorData);
+        console.error('❌ Error del servidor al eliminar:', errorData);
         alert(`Error al eliminar el troll: ${response.status} ${response.statusText}\nDetalles: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error removing troll:', error);
+      console.error('💥 Error de red al eliminar troll:', error);
       alert('Error de conexión. Inténtalo de nuevo.');
     }
   };
@@ -639,7 +644,11 @@ export default function Home() {
                             </button>
                             <button 
                               className="remove-troll-btn"
-                              onClick={() => removeTroll(troll.id)}
+                              onClick={() => {
+                                console.log('🗑️ Click eliminar - Troll completo:', troll);
+                                console.log('🆔 ID a eliminar:', troll.id, 'tipo:', typeof troll.id);
+                                removeTroll(troll.id);
+                              }}
                               title="Eliminar de la lista"
                             >
                               🗑️

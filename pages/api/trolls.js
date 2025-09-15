@@ -110,33 +110,34 @@ export default async function handler(req, res) {
       console.log('🗑️ Procesando DELETE request');
       const { id } = req.query;
       
-      console.log('🔍 Query completa:', req.query);
-      console.log('🆔 ID recibido:', id, 'tipo:', typeof id);
+      console.log('🔍 DELETE - Query completa:', req.query);
+      console.log('🆔 DELETE - ID recibido:', id, 'tipo:', typeof id);
       
       if (!id) {
         console.log('❌ Error: ID no proporcionado para DELETE');
         return res.status(400).json({ error: 'ID es requerido para eliminar' });
       }
       
-      console.log('🗑️ Eliminando troll ID:', id);
+      console.log('🗑️ Intentando eliminar troll con ID:', id);
       
       // Verificar que el troll existe antes de intentar eliminarlo
       const existingTroll = await trollsDB.getById(id);
       if (!existingTroll) {
-        console.log('❌ Troll no encontrado con ID:', id);
+        console.log('❌ DELETE - Troll no encontrado con ID:', id);
         const allTrolls = await trollsDB.getAll();
-        console.log('📋 Trolls disponibles:', allTrolls.map(t => ({ id: t.id, nick: t.nick })));
+        console.log('📋 DELETE - Trolls disponibles:', allTrolls.map(t => ({ id: t.id, nick: t.nick, tipo: typeof t.id })));
         return res.status(404).json({ error: 'Troll no encontrado', availableIds: allTrolls.map(t => t.id) });
       }
       
+      console.log('✅ DELETE - Troll encontrado:', existingTroll.nick, 'procediendo a eliminar...');
       const deleted = await trollsDB.delete(id);
       
       if (!deleted) {
-        console.log('❌ Troll no encontrado con ID:', id);
+        console.log('❌ DELETE - Falló la eliminación del troll con ID:', id);
         return res.status(404).json({ error: 'Troll no encontrado' });
       }
       
-      console.log('✅ Troll eliminado exitosamente');
+      console.log('✅ DELETE - Troll eliminado exitosamente del archivo JSON');
       res.status(200).json({ message: 'Troll eliminado' });
       
     } else {
