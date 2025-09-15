@@ -112,11 +112,10 @@ export default function Home() {
   const [trollList, setTrollList] = useState([]);
   const [keySequence, setKeySequence] = useState('');
   const [newTroll, setNewTroll] = useState({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
-  const [loadingTrolls, setLoadingTrolls] = useState(false);
   const [activeTab, setActiveTab] = useState(null);
   const [showTools, setShowTools] = useState(false);
   const [editingTroll, setEditingTroll] = useState(null);
-  const [addingTroll, setAddingTroll] = useState(false); // Nuevo estado para loading del botón
+  const [loading, setLoading] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const [backgroundMusicPaused, setBackgroundMusicPaused] = useState(false);
@@ -154,9 +153,8 @@ export default function Home() {
 
   // Cargar lista de trolls desde la API
   const loadTrollList = async () => {
-    setLoadingTrolls(true);
+    setLoading(true);
     try {
-      console.log('🔄 Cargando lista de trolls...');
       const response = await fetch('/api/trolls', {
         method: 'GET',
         headers: {
@@ -164,31 +162,26 @@ export default function Home() {
         }
       });
       
-      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('📋 Datos recibidos:', data);
         setTrollList(Array.isArray(data) ? data : []);
       } else {
-        const errorText = await response.text();
-        console.error('❌ Error loading troll list:', response.status, response.statusText, errorText);
-        setTrollList([]);
-        alert(`Error al cargar la lista: ${response.status} ${response.statusText}`);
+        console.error('Error cargando trolls:', response.status);
+        alert('Error al cargar la lista de trolls');
       }
     } catch (error) {
-      console.error('💥 Error loading troll list:', error);
-      setTrollList([]);
-      alert(`Error de conexión: ${error.message}`);
+      console.error('Error:', error);
+      alert('Error de conexión');
     }
-    setLoadingTrolls(false);
+    setLoading(false);
   };
 
   // Agregar troll a la base de datos
   const addTroll = async () => {
     if (newTroll.nick.trim() && newTroll.steamId.trim()) {
-      setAddingTroll(true);
-      const troll = {
+      setLoading(true);
+      
+      const trollData = {
         nick: newTroll.nick.trim(),
         steamId: newTroll.steamId.trim(),
         steamId64: newTroll.steamId64.trim() || 'No especificado',
@@ -197,40 +190,33 @@ export default function Home() {
       };
       
       try {
-        console.log('📤 Enviando troll:', troll);
         const response = await fetch('/api/trolls', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(troll),
+          body: JSON.stringify(trollData),
         });
 
-        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
-
         if (response.ok) {
-          const responseData = await response.json();
-          console.log('✅ Respuesta exitosa:', responseData);
-          setTrollList(prev => [...prev, responseData]);
+          const newTrollData = await response.json();
+          setTrollList(prev => [...prev, newTrollData]);
           setNewTroll({ nick: '', steamId: '', steamId64: '', reason: '', faceitUrl: '' });
-          console.log('🎉 Troll agregado exitosamente');
         } else {
-          const errorText = await response.text();
-          console.error('❌ Error adding troll:', response.status, response.statusText, errorText);
-          alert(`Error al agregar el troll: ${response.status} ${response.statusText}\n${errorText}`);
+          alert('Error al agregar el troll');
         }
       } catch (error) {
-        console.error('💥 Error adding troll:', error);
-        alert(`Error de conexión: ${error.message}`);
-      } finally {
-        setAddingTroll(false);
+        console.error('Error:', error);
+        alert('Error de conexión');
       }
+      setLoading(false);
     }
   };
 
   // Editar troll existente
   const updateTroll = async () => {
     if (editingTroll && editingTroll.nick.trim() && editingTroll.steam_id.trim()) {
+      setLoading(true);
       try {
         const response = await fetch(`/api/trolls?id=${editingTroll.id}`, {
           method: 'PUT',
@@ -253,53 +239,41 @@ export default function Home() {
           ));
           setEditingTroll(null);
         } else {
-          const errorText = await response.text();
-          console.error('Error updating troll:', response.statusText, errorText);
-          alert(`Error al actualizar el troll: ${response.status} ${response.statusText}`);
+          alert('Error al actualizar el troll');
         }
       } catch (error) {
-        console.error('Error updating troll:', error);
-        alert('Error de conexión. Inténtalo de nuevo.');
+        console.error('Error:', error);
+        alert('Error de conexión');
       }
+      setLoading(false);
     }
   };
 
   // Remover troll de la base de datos
   const removeTroll = async (trollId) => {
-    console.log('🗑️ Frontend: Intentando eliminar troll con ID:', trollId, 'tipo:', typeof trollId);
-    
     if (!confirm('¿Estás seguro de que quieres eliminar este troll?')) {
       return;
     }
     
+    setLoading(true);
     try {
-      console.log('🗑️ Enviando DELETE request para troll ID:', trollId);
       const response = await fetch(`/api/trolls?id=${trollId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         }
       });
-
-      console.log('📡 DELETE response:', response.status, response.statusText);
       
       if (response.ok) {
-        console.log('✅ Troll eliminado exitosamente del servidor');
-        // Actualizar la lista local filtrando por ID
-        setTrollList(prev => {
-          const filtered = prev.filter(troll => troll.id != trollId);
-          console.log('📋 Lista actualizada, trolls restantes:', filtered.length);
-          return filtered;
-        });
+        setTrollList(prev => prev.filter(troll => troll.id !== trollId));
       } else {
-        const errorData = await response.json();
-        console.error('❌ Error del servidor al eliminar:', errorData);
-        alert(`Error al eliminar el troll: ${response.status} ${response.statusText}\nDetalles: ${errorData.error}`);
+        alert('Error al eliminar el troll');
       }
     } catch (error) {
-      console.error('💥 Error de red al eliminar troll:', error);
-      alert('Error de conexión. Inténtalo de nuevo.');
+      console.error('Error:', error);
+      alert('Error de conexión');
     }
+    setLoading(false);
   };
 
   // Función para mostrar herramientas y seleccionar pestaña
@@ -533,13 +507,14 @@ export default function Home() {
                           <button 
                             className="add-troll-btn update-btn"
                             onClick={updateTroll}
-                            disabled={!editingTroll.nick.trim() || !editingTroll.steam_id.trim()}
+                            disabled={!editingTroll.nick.trim() || !editingTroll.steam_id.trim() || loading}
                           >
-                            💾 Guardar Cambios
+                            {loading ? '⏳ Guardando...' : '💾 Guardar Cambios'}
                           </button>
                           <button 
                             className="add-troll-btn cancel-btn"
                             onClick={cancelEdit}
+                            disabled={loading}
                           >
                             ❌ Cancelar
                           </button>
@@ -548,9 +523,9 @@ export default function Home() {
                         <button 
                           className="add-troll-btn"
                           onClick={addTroll}
-                          disabled={!newTroll.nick.trim() || !newTroll.steamId.trim() || addingTroll}
+                          disabled={!newTroll.nick.trim() || !newTroll.steamId.trim() || loading}
                         >
-                          {addingTroll ? '⏳ Agregando...' : 'Agregar Troll'}
+                          {loading ? '⏳ Agregando...' : 'Agregar Troll'}
                         </button>
                       )}
                     </div>
@@ -560,7 +535,7 @@ export default function Home() {
                 {/* Lista de trolls */}
                 <div className="troll-list-section">
                   <h3>📋 Trolls Registrados ({trollList.length})</h3>
-                  {loadingTrolls ? (
+                  {loading ? (
                     <div className="loading-trolls">Cargando lista...</div>
                   ) : trollList.length === 0 ? (
                     <p className="empty-list">No hay trolls registrados</p>
@@ -638,18 +613,17 @@ export default function Home() {
                               className="edit-troll-btn"
                               onClick={() => startEditTroll(troll)}
                               title="Editar troll"
-                              disabled={editingTroll !== null}
+                              disabled={editingTroll !== null || loading}
                             >
                               ✏️
                             </button>
                             <button 
                               className="remove-troll-btn"
                               onClick={() => {
-                                console.log('🗑️ Click eliminar - Troll completo:', troll);
-                                console.log('🆔 ID a eliminar:', troll.id, 'tipo:', typeof troll.id);
                                 removeTroll(troll.id);
                               }}
                               title="Eliminar de la lista"
+                              disabled={loading}
                             >
                               🗑️
                             </button>
